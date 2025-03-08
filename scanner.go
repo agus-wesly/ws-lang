@@ -259,7 +259,6 @@ func (s *Scanner) addToken(tokenType TokenType) {
 }
 
 func (s *Scanner) addTokenLiteral(tokenType TokenType, literal interface{}) {
-    // TODO : check literal. ex : nil then type is nil
 	text := s.Source[s.start:s.current]
 	s.Tokens = append(s.Tokens, Token{Type: tokenType, Literal: literal, Lexeme: text, Line: s.lineCount})
 }
