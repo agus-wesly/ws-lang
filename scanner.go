@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -197,7 +198,9 @@ func (s *Scanner) string() {
 func (s *Scanner) char() {
 	ch := s.advance()
 	if s.peek() != 39 {
-		s.Lox.error(Token{Type: CHAR, Line: s.lineCount, Lexeme: string(s.peek())}, "Invalid character")
+		s.CreateCompileError(Token{Type: CHAR, Line: s.lineCount, Lexeme: string(s.peek())}, "Invalid char")
+		// TODO : maybe we can change this to actually return error ??
+		s.current = len(s.Source)
 		return
 	}
 	s.advance()
@@ -276,4 +279,9 @@ func (s *Scanner) addToken(tokenType TokenType) {
 func (s *Scanner) addTokenLiteral(tokenType TokenType, literal interface{}) {
 	text := s.Source[s.start:s.current]
 	s.Tokens = append(s.Tokens, Token{Type: tokenType, Literal: literal, Lexeme: text, Line: s.lineCount})
+}
+
+func (s *Scanner) CreateCompileError(token Token, msg string) {
+	s.Lox.HadError = true
+	fmt.Printf("[line 0] Compile Error : Invalid character at line :  %d\n", token.Line)
 }

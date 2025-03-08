@@ -26,9 +26,6 @@ func main() {
 
 		source := string(byt)
 		lox.run(source)
-		if lox.HadError {
-			os.Exit(1)
-		}
 	} else {
 		lox.showPrompt()
 	}
@@ -71,6 +68,9 @@ func (lox *Lox) run(source string) {
 	// for _, tok := range tokens {
 	// 	fmt.Println(tok.toString())
 	// }
+    if lox.HadError {
+        os.Exit(69)
+    }
 	parser := CreateParser(tokens, lox)
 	exprTree, err := parser.parse()
 	if err != nil {
