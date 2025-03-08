@@ -158,7 +158,7 @@ func (p *Parser) parseUnary() (Expression, error) {
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
-	if p.match(STRING, NUMBER, TRUE, FALSE, NIL) {
+	if p.match(STRING, NUMBER, TRUE, FALSE, NIL, CHAR) {
 		cur := p.previous()
 		return CreateLiteral(cur.Literal), nil
 	} else {

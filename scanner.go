@@ -128,6 +128,9 @@ func (s *Scanner) processChar() {
 	case '"':
 		s.string()
 		break
+	case 39:
+		s.char()
+		break
 	case '\n':
 		s.lineCount += 1
 		break
@@ -189,6 +192,18 @@ func (s *Scanner) string() {
 	s.advance()
 	s.addTokenLiteral(STRING, s.Source[s.start+1:s.current-1])
 }
+
+// TODO : Add support for escape sequence
+func (s *Scanner) char() {
+	ch := s.advance()
+	if s.peek() != 39 {
+		s.Lox.error(Token{Type: CHAR, Line: s.lineCount, Lexeme: string(s.peek())}, "Invalid character")
+		return
+	}
+	s.advance()
+	s.addTokenLiteral(CHAR, float64(ch))
+}
+
 func (s *Scanner) multilineComment() {
 	for !s.isAtEnd() {
 		if s.peek() == '*' && s.peekNext() == '/' {

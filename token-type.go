@@ -32,6 +32,7 @@ const (
 	IDENTIFIER
 	STRING
 	NUMBER
+    CHAR
 
 	// Keywords
 	AND
