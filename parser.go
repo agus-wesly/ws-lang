@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 )
 
 type Parser struct {
@@ -175,20 +174,16 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			}
 		}
 	}
-	return nil, CreateError(p.peek())
+	return nil, CreateRuntimeError(p.peek(), "Unknown symbol")
 }
 
-func CreateError(token Token) error {
-	msg := fmt.Sprintf("[Line %d] : Error at %s\n", token.Line, token.Lexeme)
-	return errors.New(msg)
-}
 
 func (p *Parser) isAtEnd() bool {
 	return p.peek().Type == EOF
 }
 
-func (p *Parser) peek() Token {
-	return p.Tokens[p.Current]
+func (p *Parser) peek() *Token {
+	return &p.Tokens[p.Current]
 }
 
 func (p *Parser) previous() Token {
@@ -232,7 +227,7 @@ func (p *Parser) consume(tokenType TokenType) error {
 }
 
 func (p *Parser) error() error {
-	p.Lox.error(p.peek(), "Syntax error")
+	p.Lox.error(*p.peek(), "Syntax error")
 	return errors.New("Syntax error")
 }
 

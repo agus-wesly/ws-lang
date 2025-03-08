@@ -44,63 +44,63 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 
 	switch b.Operator.Type {
 	case MINUS:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) - right.(float64), nil
 
 	case PLUS:
-		if err := i.checkExprNumber(b.Operator, left, right); err == nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err == nil {
 			return left.(float64) + right.(float64), nil
 		}
-		if err := i.checkExprString(b.Operator, left, right); err == nil {
+		if err := i.checkExprString(&b.Operator, left, right); err == nil {
 			return left.(string) + right.(string), nil
 		}
-		if err := i.checkExprString(b.Operator, left); err == nil {
-			if err := i.checkExprNumber(b.Operator, right); err == nil {
+		if err := i.checkExprString(&b.Operator, left); err == nil {
+			if err := i.checkExprNumber(&b.Operator, right); err == nil {
 				return left.(string) + fmt.Sprint(right.(float64)), nil
 			}
 		}
-		if err := i.checkExprNumber(b.Operator, left); err == nil {
-			if err := i.checkExprString(b.Operator, right); err == nil {
+		if err := i.checkExprNumber(&b.Operator, left); err == nil {
+			if err := i.checkExprString(&b.Operator, right); err == nil {
 				return fmt.Sprint(left.(float64)) + right.(string), nil
 			}
 		}
-		return nil, CreateError(b.Operator)
+		return nil, CreateRuntimeError(&b.Operator, "Addition not supported")
 
 	case SLASH:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) / right.(float64), nil
 
 	case STAR:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) * right.(float64), nil
 
 	case GREATER:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) > right.(float64), nil
 
 	case GREATER_EQUAL:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		r := (left.(float64)) >= (right.(float64))
 		return r, nil
 
 	case LESS:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) < right.(float64), nil
 
 	case LESS_EQUAL:
-		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) <= right.(float64), nil
@@ -125,7 +125,7 @@ func (i *Interpreter) VisitUnary(u *Unary) (any, error) {
 	case MINUS:
 		val, ok := val.(float64)
 		if !ok {
-			return nil, errors.New("TODO : handle conversion error")
+			return nil, CreateRuntimeError(u.Operand, "Conversion error")
 		}
 		return -(val), nil
 	case BANG:
@@ -172,22 +172,26 @@ func parseFloat(x any) float64 {
 	return res
 }
 
-func (i *Interpreter) checkExprNumber(tok Token, expressions ...any) error {
+func (i *Interpreter) checkExprNumber(tok *Token, expressions ...any) error {
 	for _, expr := range expressions {
 		_, ok := expr.(float64)
 		if !ok {
-			return CreateError(tok)
+			return CreateRuntimeError(tok, "Parsing error")
 		}
 	}
 	return nil
 }
 
-func (i *Interpreter) checkExprString(tok Token, expressions ...any) error {
+func (i *Interpreter) checkExprString(tok *Token, expressions ...any) error {
 	for _, expr := range expressions {
 		_, ok := expr.(string)
 		if !ok {
-			return CreateError(tok)
+			return CreateRuntimeError(tok, "Parsing error")
 		}
 	}
 	return nil
+}
+
+func CreateRuntimeError(token *Token, msg string) error {
+	return errors.New(fmt.Sprintf("[line %d] Compile Error : %s\n", token.Line, msg))
 }
