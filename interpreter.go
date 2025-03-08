@@ -56,6 +56,16 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 		if err := i.checkExprString(b.Operator, left, right); err == nil {
 			return left.(string) + right.(string), nil
 		}
+		if err := i.checkExprString(b.Operator, left); err == nil {
+			if err := i.checkExprNumber(b.Operator, right); err == nil {
+				return left.(string) + fmt.Sprint(right.(float64)), nil
+			}
+		}
+		if err := i.checkExprNumber(b.Operator, left); err == nil {
+			if err := i.checkExprString(b.Operator, right); err == nil {
+				return fmt.Sprint(left.(float64)) + right.(string), nil
+			}
+		}
 		return nil, CreateError(b.Operator)
 
 	case SLASH:
@@ -99,7 +109,7 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 		return (left != right), nil
 
 	case EQUAL_EQUAL:
-        fmt.Println(left, right)
+		fmt.Println(left, right)
 		return (left == right), nil
 	}
 	return nil, errors.New("Unreachable")
