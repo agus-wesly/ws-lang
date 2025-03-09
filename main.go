@@ -23,7 +23,6 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-
 		source := string(byt)
 		lox.run(source)
 	} else {
@@ -78,11 +77,6 @@ func (lox *Lox) run(source string) {
 		return
 	}
 
-	for _, stmt := range statements {
-		err := stmt.accept(&Interpreter{})
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-	}
+	interpreter := CreateInterpreter()
+	interpreter.interpret(statements)
 }

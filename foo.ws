@@ -1,2 +1,1 @@
-print "Hello";
-print (1+1)*3;
+print("Wesly " + ('a' == 'b' ? "Aku jelek" : "Aku ganteng"));

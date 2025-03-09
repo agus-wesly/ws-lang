@@ -16,6 +16,20 @@ type ExpressionVisitor interface {
 
 type Interpreter struct{}
 
+func CreateInterpreter() *Interpreter {
+    return &Interpreter{}
+}
+
+func (i *Interpreter) interpret(statements []Statement) {
+	for _, stmt := range statements {
+		err := stmt.accept(&Interpreter{})
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+	}
+}
+
 func (i *Interpreter) VisitPrintStatement(p *PrintStatement) (error) {
     expr, err := i.evaluate(p.Expr)
     if err != nil {
@@ -131,7 +145,6 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 		return (left != right), nil
 
 	case EQUAL_EQUAL:
-		fmt.Println(left, right)
 		return (left == right), nil
 	}
 	return nil, errors.New("Unreachable")
