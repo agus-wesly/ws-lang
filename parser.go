@@ -18,12 +18,56 @@ func CreateParser(tokens []Token, lox *Lox) *Parser {
 	}
 }
 
-func (p *Parser) parse() (Expression, error) {
+func (p *Parser) parse() ([]Statement, error) {
+	arr := []Statement{}
+	for !p.isAtEnd() {
+		stmt, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+		arr = append(arr, stmt)
+	}
+	return arr, nil
+}
+
+func (p *Parser) statement() (Statement, error) {
+	if p.match(PRINT) {
+		parsed, err := p.parsePrint()
+		if err != nil {
+			return nil, err
+		}
+		return parsed, nil
+	}
+	parsed, err := p.parseExpressionStatement()
+	if err != nil {
+		return nil, err
+	}
+	return parsed, nil
+}
+
+func (p *Parser) parsePrint() (Statement, error) {
 	expr, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
-	return expr, nil
+
+    err = p.consume(SEMICOLON, "Expected ; after expression")
+	if err != nil {
+		return nil, err
+	}
+	return CreatePrintStatement(expr), nil
+}
+func (p *Parser) parseExpressionStatement() (Statement, error) {
+	expr, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.consume(SEMICOLON,  "Expected ; after expression")
+	if err != nil {
+		return nil, err
+	}
+	return CreateExpressionStatement(expr), nil
 }
 
 func (p *Parser) parseExpression() (Expression, error) {
@@ -60,7 +104,7 @@ func (p *Parser) parseTernary() (Expression, error) {
 			return nil, err
 		}
 
-		err = p.consume(COLON)
+		err = p.consume(COLON,  "Expected : inside ternary operator")
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +210,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			if err != nil {
 				return nil, err
 			}
-			err = p.consume(RIGHT_PAREN)
+			err = p.consume(RIGHT_PAREN, "Expected )")
 			if err != nil {
 				return nil, err
 			} else {
@@ -176,7 +220,6 @@ func (p *Parser) parsePrimary() (Expression, error) {
 	}
 	return nil, CreateRuntimeError(p.peek(), "Unknown symbol")
 }
-
 
 func (p *Parser) isAtEnd() bool {
 	return p.peek().Type == EOF
@@ -218,12 +261,12 @@ func (p *Parser) advance() Token {
 
 }
 
-func (p *Parser) consume(tokenType TokenType) error {
+func (p *Parser) consume(tokenType TokenType, msg string) error {
 	if p.peek().Type == tokenType {
 		p.advance()
 		return nil
 	}
-	return p.error()
+	return CreateRuntimeError(p.peek(), msg)
 }
 
 func (p *Parser) error() error {

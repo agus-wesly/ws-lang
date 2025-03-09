@@ -1,7 +1,7 @@
 package main
 
 type Expression interface {
-	accept(Visitor) (any, error)
+	accept(ExpressionVisitor) (any, error)
 }
 
 type Literal struct {
@@ -13,7 +13,7 @@ func CreateLiteral(value interface{}) *Literal {
 		Value: value,
 	}
 }
-func (l *Literal) accept(v Visitor) (any, error) {
+func (l *Literal) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitLiteral(l), nil
 }
 
@@ -28,7 +28,7 @@ func CreateUnary(right Expression, operand *Token) *Unary {
 		Operand: operand,
 	}
 }
-func (u *Unary) accept(v Visitor) (any, error) {
+func (u *Unary) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitUnary(u)
 }
 
@@ -45,7 +45,7 @@ func CreateBinary(left Expression, operator Token, right Expression) *Binary {
 		Right:    right,
 	}
 }
-func (b *Binary) accept(v Visitor) (any, error) {
+func (b *Binary) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitBinary(b)
 }
 
@@ -62,7 +62,7 @@ func CreateTernary(left Expression, center Expression, right Expression) *Ternar
 		Right:  right,
 	}
 }
-func (t *Ternary) accept(v Visitor) (any, error) {
+func (t *Ternary) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitTernary(t)
 }
 
@@ -85,6 +85,6 @@ func CreateGroup(expr Expression) *Grouping {
 		Expression: expr,
 	}
 }
-func (g *Grouping) accept(v Visitor) (any, error) {
+func (g *Grouping) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitGrouping(g)
 }

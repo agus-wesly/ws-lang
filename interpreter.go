@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-type Visitor interface {
+type ExpressionVisitor interface {
 	VisitLiteral(l *Literal) any
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
@@ -15,6 +15,24 @@ type Visitor interface {
 }
 
 type Interpreter struct{}
+
+func (i *Interpreter) VisitPrintStatement(p *PrintStatement) (error) {
+    expr, err := i.evaluate(p.Expr)
+    if err != nil {
+        return err
+    }
+    fmt.Println(expr)
+    return nil
+}
+
+
+func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) error {
+    _, err := i.evaluate(p.Expr)
+    if err != nil {
+        return err
+    }
+    return nil
+}
 
 func (i *Interpreter) VisitGrouping(g *Grouping) (any, error) {
 	return i.evaluate(g.Expression)
@@ -197,5 +215,5 @@ func (i *Interpreter) checkExprString(tok *Token, expressions ...any) error {
 }
 
 func CreateRuntimeError(token *Token, msg string) error {
-	return errors.New(fmt.Sprintf("[line %d] Compile Error : %s\n", token.Line, msg))
+    return errors.New(fmt.Sprintf("[line %d] Runtime Error : %s\n", token.Line, msg))
 }

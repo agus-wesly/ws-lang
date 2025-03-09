@@ -68,21 +68,21 @@ func (lox *Lox) run(source string) {
 	// for _, tok := range tokens {
 	// 	fmt.Println(tok.toString())
 	// }
-    if lox.HadError {
-        os.Exit(69)
-    }
+	if lox.HadError {
+		os.Exit(69)
+	}
 	parser := CreateParser(tokens, lox)
-	exprTree, err := parser.parse()
+	statements, err := parser.parse()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	res, err := exprTree.accept(&Interpreter{})
-	if err != nil {
-		fmt.Println(err.Error())
-		return
+	for _, stmt := range statements {
+		err := stmt.accept(&Interpreter{})
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 	}
-
-	fmt.Println(res)
 }

@@ -1,5 +1,2 @@
-1 == 1
-    ? 2
-    : 2 == 2 
-        ? "ok"
-        : "not ok"
+print "Hello";
+print (1+1)*3;
