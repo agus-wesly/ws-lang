@@ -72,6 +72,10 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
+        // Divide by 0
+        if right == 0.0 {
+            return nil, CreateRuntimeError(&b.Operator, "Cannot divide by 0")
+        }
 		return left.(float64) / right.(float64), nil
 
 	case STAR:
