@@ -21,13 +21,20 @@ func CreateParser(tokens []Token, lox *Lox) *Parser {
 func (p *Parser) parse() ([]Statement, error) {
 	arr := []Statement{}
 	for !p.isAtEnd() {
-		stmt, err := p.statement()
+		stmt, err := p.declaration()
 		if err != nil {
 			return nil, err
 		}
 		arr = append(arr, stmt)
 	}
 	return arr, nil
+}
+
+func (p *Parser) declaration() (Statement, error) {
+	if p.match(LET) {
+		return p.varDeclaration()
+	}
+	return p.statement()
 }
 
 func (p *Parser) statement() (Statement, error) {
@@ -45,13 +52,33 @@ func (p *Parser) statement() (Statement, error) {
 	return parsed, nil
 }
 
+func (p *Parser) varDeclaration() (Statement, error) {
+	identifier, err := p.consume(IDENTIFIER, "Expect variable name")
+	if err != nil {
+		return nil, err
+	}
+	var initValue Expression = nil
+	if p.match(EQUAL) {
+		expr, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		initValue = expr
+	}
+
+	if _, err := p.consume(SEMICOLON, "Missing semicolon ; at the end of statement"); err != nil {
+		return nil, err
+	}
+	return CreateVarDeclaration(initValue, identifier), nil
+}
+
 func (p *Parser) parsePrint() (Statement, error) {
 	expr, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
 
-    err = p.consume(SEMICOLON, "Expected ; after expression")
+	_, err = p.consume(SEMICOLON, "Expected ; after expression")
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +90,7 @@ func (p *Parser) parseExpressionStatement() (Statement, error) {
 		return nil, err
 	}
 
-	err = p.consume(SEMICOLON,  "Expected ; after expression")
+	_, err = p.consume(SEMICOLON, "Expected ; after expression")
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +131,7 @@ func (p *Parser) parseTernary() (Expression, error) {
 			return nil, err
 		}
 
-		err = p.consume(COLON,  "Expected : inside ternary operator")
+		_, err = p.consume(COLON, "Expected : inside ternary operator")
 		if err != nil {
 			return nil, err
 		}
@@ -201,7 +228,7 @@ func (p *Parser) parseUnary() (Expression, error) {
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
-	if p.match(STRING, NUMBER, TRUE, FALSE, NIL, CHAR) {
+	if p.match(STRING, NUMBER, TRUE, FALSE, NIL, CHAR, IDENTIFIER) {
 		cur := p.previous()
 		return CreateLiteral(cur.Literal), nil
 	} else {
@@ -210,7 +237,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			if err != nil {
 				return nil, err
 			}
-			err = p.consume(RIGHT_PAREN, "Expected )")
+			_, err = p.consume(RIGHT_PAREN, "Expected )")
 			if err != nil {
 				return nil, err
 			} else {
@@ -261,12 +288,12 @@ func (p *Parser) advance() Token {
 
 }
 
-func (p *Parser) consume(tokenType TokenType, msg string) error {
+func (p *Parser) consume(tokenType TokenType, msg string) (Token, error) {
 	if p.peek().Type == tokenType {
 		p.advance()
-		return nil
+		return p.previous(), nil
 	}
-	return CreateRuntimeError(p.peek(), msg)
+	return Token{}, CreateRuntimeError(p.peek(), msg)
 }
 
 func (p *Parser) error() error {
@@ -282,7 +309,7 @@ func (p *Parser) synchronize() {
 		case FOR:
 		case WHILE:
 		case IF:
-		case VAR:
+		case LET:
 		case PRINT:
 		case RETURN:
 		case CLASS:

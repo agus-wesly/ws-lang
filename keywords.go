@@ -15,7 +15,7 @@ var keywords = map[string]TokenType{
 	"super":  SUPER,
 	"this":   THIS,
 	"true":   TRUE,
-	"var":    VAR,
+	"let":    LET,
 	"while":  WHILE,
 	"eof":    EOF,
 }

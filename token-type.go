@@ -49,7 +49,7 @@ const (
 	SUPER
 	THIS
 	TRUE
-	VAR
+	LET
 	WHILE
 	EOF
 )

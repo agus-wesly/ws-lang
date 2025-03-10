@@ -7,6 +7,7 @@ type Statement interface {
 type StatementVisitor interface {
 	VisitExpressionStatement(e *ExpressionStatement) error
 	VisitPrintStatement(p *PrintStatement) error
+    VisitVarDeclaration(v *VarDeclaration) error
 }
 
 type ExpressionStatement struct {
@@ -34,5 +35,21 @@ func (p *PrintStatement) accept(visitor StatementVisitor) error {
 func CreatePrintStatement(expr Expression) *PrintStatement {
 	return &PrintStatement{
 		Expr: expr,
+	}
+}
+
+type VarDeclaration struct {
+    Identifier Token
+	Expr Expression
+}
+
+func (v *VarDeclaration) accept(visitor StatementVisitor) error {
+	return visitor.VisitVarDeclaration(v)
+}
+
+func CreateVarDeclaration(expr Expression, identifier Token) *VarDeclaration {
+	return &VarDeclaration{
+		Expr: expr,
+        Identifier: identifier,
 	}
 }

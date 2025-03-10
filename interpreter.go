@@ -30,6 +30,10 @@ func (i *Interpreter) interpret(statements []Statement) {
 	}
 }
 
+func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (error) {
+    panic("TODO")
+}
+
 func (i *Interpreter) VisitPrintStatement(p *PrintStatement) (error) {
     expr, err := i.evaluate(p.Expr)
     if err != nil {
