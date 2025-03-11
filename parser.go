@@ -228,9 +228,12 @@ func (p *Parser) parseUnary() (Expression, error) {
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
-	if p.match(STRING, NUMBER, TRUE, FALSE, NIL, CHAR, IDENTIFIER) {
+	if p.match(STRING, NUMBER, TRUE, FALSE, NIL, CHAR) {
 		cur := p.previous()
 		return CreateLiteral(cur.Literal), nil
+	} else if p.match(IDENTIFIER) {
+		cur := p.previous()
+		return CreateIdentifier(cur.Lexeme), nil
 	} else {
 		if p.match(LEFT_PAREN) {
 			expr, err := p.parseExpression()

@@ -17,6 +17,18 @@ func (l *Literal) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitLiteral(l), nil
 }
 
+type Identifier struct {
+	name string
+}
+
+func CreateIdentifier(name string) *Identifier {
+	return &Identifier{name: name}
+}
+
+func (identifier *Identifier) accept(v ExpressionVisitor) (any, error) {
+	return v.VisitIdentifier(identifier), nil
+}
+
 type Unary struct {
 	Right   Expression
 	Operand *Token

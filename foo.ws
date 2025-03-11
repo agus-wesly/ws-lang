@@ -1,1 +1,3 @@
-print("Wesly " + ('a' == 'b' ? "Aku jelek" : "Aku ganteng"));
+let foo = 1;
+let foo = 69;
+print foo ;

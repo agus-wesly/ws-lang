@@ -9,6 +9,7 @@ import (
 
 type Lox struct {
 	HadError bool
+	*Interpreter
 }
 
 func main() {
@@ -17,7 +18,11 @@ func main() {
 		fmt.Println("Usage : jlox [help]")
 		os.Exit(1)
 	}
-	lox := Lox{}
+	lox := Lox{
+		Interpreter: CreateInterpreter(),
+	}
+	// Todo : initialize the interpreter in global var
+	// so when running in CLI, the variabel is persisted
 	if len(args) == 2 {
 		byt, err := os.ReadFile(args[1])
 		if err != nil {
@@ -72,11 +77,10 @@ func (lox *Lox) run(source string) {
 	}
 	parser := CreateParser(tokens, lox)
 	statements, err := parser.parse()
+	lox.Interpreter.interpret(statements)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	interpreter := CreateInterpreter()
-	interpreter.interpret(statements)
 }

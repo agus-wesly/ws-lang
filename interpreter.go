@@ -8,21 +8,28 @@ import (
 
 type ExpressionVisitor interface {
 	VisitLiteral(l *Literal) any
+	VisitIdentifier(i *Identifier) any
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
 	VisitTernary(t *Ternary) (any, error)
 	VisitGrouping(g *Grouping) (any, error)
 }
 
-type Interpreter struct{}
+type Interpreter struct {
+	*Environment
+}
 
 func CreateInterpreter() *Interpreter {
-    return &Interpreter{}
+	return &Interpreter{
+		Environment: &Environment{
+			values: make(map[string]any),
+		},
+	}
 }
 
 func (i *Interpreter) interpret(statements []Statement) {
 	for _, stmt := range statements {
-		err := stmt.accept(&Interpreter{})
+		err := stmt.accept(i)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -30,26 +37,31 @@ func (i *Interpreter) interpret(statements []Statement) {
 	}
 }
 
-func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (error) {
-    panic("TODO")
+func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) error {
+	name := v.Identifier.Lexeme
+	value, err := v.Expr.accept(i)
+	if err != nil {
+		return err
+	}
+	i.Environment.Set(name, value)
+	return nil
 }
 
-func (i *Interpreter) VisitPrintStatement(p *PrintStatement) (error) {
-    expr, err := i.evaluate(p.Expr)
-    if err != nil {
-        return err
-    }
-    fmt.Println(expr)
-    return nil
+func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
+	expr, err := i.evaluate(p.Expr)
+	if err != nil {
+		return err
+	}
+	fmt.Println(expr)
+	return nil
 }
-
 
 func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) error {
-    _, err := i.evaluate(p.Expr)
-    if err != nil {
-        return err
-    }
-    return nil
+	_, err := i.evaluate(p.Expr)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (i *Interpreter) VisitGrouping(g *Grouping) (any, error) {
@@ -108,10 +120,10 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
 			return nil, err
 		}
-        // Divide by 0
-        if right == 0.0 {
-            return nil, CreateRuntimeError(&b.Operator, "Cannot divide by 0")
-        }
+		// Divide by 0
+		if right == 0.0 {
+			return nil, CreateRuntimeError(&b.Operator, "Cannot divide by 0")
+		}
 		return left.(float64) / right.(float64), nil
 
 	case STAR:
@@ -177,6 +189,10 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 	return l.Value
 }
 
+func (i *Interpreter) VisitIdentifier(identifier *Identifier) any {
+	return i.Environment.Get(identifier.name)
+}
+
 func (i *Interpreter) evaluate(exp Expression) (any, error) {
 	return exp.accept(i)
 }
@@ -232,5 +248,5 @@ func (i *Interpreter) checkExprString(tok *Token, expressions ...any) error {
 }
 
 func CreateRuntimeError(token *Token, msg string) error {
-    return errors.New(fmt.Sprintf("[line %d] Runtime Error : %s\n", token.Line, msg))
+	return errors.New(fmt.Sprintf("[line %d] Runtime Error : %s\n", token.Line, msg))
 }
