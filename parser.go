@@ -98,7 +98,29 @@ func (p *Parser) parseExpressionStatement() (Statement, error) {
 }
 
 func (p *Parser) parseExpression() (Expression, error) {
-	return p.parseComma()
+	return p.parseAssignment()
+}
+
+// a = 4;
+func (p *Parser) parseAssignment() (Expression, error) {
+	expr, err := p.parseComma()
+	if err != nil {
+		return nil, err
+	}
+	if p.match(EQUAL) {
+		// Check if expr is var
+		exprVar, ok := expr.(*Var)
+		if !ok {
+		    // If not then it must return error
+			return nil, CreateRuntimeError(p.peek(), "Invalid identifier")
+		}
+        value, err := p.parseComma()
+        if err != nil {
+            return nil, err
+        }
+        return CreateVarAssignment(exprVar.name, value), nil
+	}
+	return expr, nil
 }
 
 // Comma operator evaluates left side, discards it and then
@@ -233,7 +255,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 		return CreateLiteral(cur.Literal), nil
 	} else if p.match(IDENTIFIER) {
 		cur := p.previous()
-		return CreateIdentifier(cur.Lexeme), nil
+		return CreateVar(cur), nil
 	} else {
 		if p.match(LEFT_PAREN) {
 			expr, err := p.parseExpression()

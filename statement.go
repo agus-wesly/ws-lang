@@ -53,3 +53,19 @@ func CreateVarDeclaration(expr Expression, identifier Token) *VarDeclaration {
         Identifier: identifier,
 	}
 }
+
+type VarAssignment struct {
+    Token Token
+	Expr Expression
+}
+
+func (v *VarAssignment) accept(visitor ExpressionVisitor) (any, error) {
+	return visitor.VisitVarAssignment(v)
+}
+
+func CreateVarAssignment(token Token, expr Expression) *VarAssignment {
+	return &VarAssignment{
+        Token: token,
+        Expr: expr,
+	}
+}

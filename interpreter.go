@@ -8,11 +8,13 @@ import (
 
 type ExpressionVisitor interface {
 	VisitLiteral(l *Literal) any
-	VisitIdentifier(i *Identifier) any
+	VisitIdentifier(i *Var) any
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
 	VisitTernary(t *Ternary) (any, error)
 	VisitGrouping(g *Grouping) (any, error)
+	VisitAssignment(a *Assignment) (any, error)
+	VisitVarAssignment(v *VarAssignment) (any, error)
 }
 
 type Interpreter struct {
@@ -37,6 +39,20 @@ func (i *Interpreter) interpret(statements []Statement) {
 	}
 }
 
+func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
+	name := *(&v.Token.Lexeme)
+	_, ok := i.values[name]
+	if !ok {
+		return nil, CreateRuntimeError(&v.Token, "Unknown variable: "+name)
+	}
+	val, err := v.Expr.accept(i)
+	if err != nil {
+		return nil, err
+	}
+	i.Set(name, val)
+	return (i.values[name]), nil
+}
+
 func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) error {
 	name := v.Identifier.Lexeme
 	var value any = v.Expr
@@ -58,6 +74,11 @@ func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
 	}
 	fmt.Println(expr)
 	return nil
+}
+
+// a = 5
+func (i *Interpreter) VisitAssignment(a *Assignment) (any, error) {
+	panic("TODO")
 }
 
 func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) error {
@@ -193,8 +214,8 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 	return l.Value
 }
 
-func (i *Interpreter) VisitIdentifier(identifier *Identifier) any {
-	return i.Environment.Get(identifier.name)
+func (i *Interpreter) VisitIdentifier(identifier *Var) any {
+	return i.Environment.Get(identifier.name.Lexeme)
 }
 
 func (i *Interpreter) evaluate(exp Expression) (any, error) {

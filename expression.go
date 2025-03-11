@@ -17,16 +17,29 @@ func (l *Literal) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitLiteral(l), nil
 }
 
-type Identifier struct {
-	name string
+type Var struct {
+	name Token
 }
 
-func CreateIdentifier(name string) *Identifier {
-	return &Identifier{name: name}
+func CreateVar(name Token) *Var {
+	return &Var{name: name}
 }
 
-func (identifier *Identifier) accept(v ExpressionVisitor) (any, error) {
-	return v.VisitIdentifier(identifier), nil
+func (varExpr *Var) accept(v ExpressionVisitor) (any, error) {
+    return v.VisitIdentifier(varExpr), nil
+}
+
+type Assignment struct {
+    Name Token
+}
+
+func CreateAssignment(name Token) *Assignment {
+	return &Assignment{
+        Name: name,
+	}
+}
+func (a *Assignment) accept(v ExpressionVisitor) (any, error) {
+	return v.VisitAssignment(a)
 }
 
 type Unary struct {
