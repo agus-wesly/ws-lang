@@ -267,7 +267,16 @@ func (s *Scanner) alpha() {
 	} else {
 		tokenType = reservedType
 	}
-	s.addTokenLiteral(tokenType, s.Source[s.start:s.current])
+
+    var literal interface{} = s.Source[s.start:s.current]
+    if tokenType == NIL {
+        literal = nil
+    } else if tokenType == FALSE {
+        literal = false
+    } else if tokenType == TRUE {
+        literal = true
+    }
+	s.addTokenLiteral(tokenType, literal)
 }
 
 // x=1+1\n

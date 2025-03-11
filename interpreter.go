@@ -39,9 +39,13 @@ func (i *Interpreter) interpret(statements []Statement) {
 
 func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) error {
 	name := v.Identifier.Lexeme
-	value, err := v.Expr.accept(i)
-	if err != nil {
-		return err
+	var value any = v.Expr
+	if value != nil {
+		exprValue, err := v.Expr.accept(i)
+		if err != nil {
+			return err
+		}
+		value = exprValue
 	}
 	i.Environment.Set(name, value)
 	return nil
