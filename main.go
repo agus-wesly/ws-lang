@@ -29,7 +29,7 @@ func main() {
 			panic(err)
 		}
 		source := string(byt)
-		lox.run(source)
+		lox.run(source, false)
 	} else {
 		lox.showPrompt()
 	}
@@ -47,7 +47,7 @@ func (lox *Lox) showPrompt() {
 		if inp == "" {
 			break
 		} else {
-			lox.run(inp)
+			lox.run(inp, true)
 			lox.HadError = false
 		}
 	}
@@ -66,7 +66,7 @@ func (lox *Lox) printError(line int, where string, msg string) {
 	lox.HadError = true
 }
 
-func (lox *Lox) run(source string) {
+func (lox *Lox) run(source string, replMode bool) {
 	scannner := CreateScanner(source, lox)
 	tokens := scannner.scanTokens()
 	// for _, tok := range tokens {
@@ -77,7 +77,7 @@ func (lox *Lox) run(source string) {
 	}
 	parser := CreateParser(tokens, lox)
 	statements, err := parser.parse()
-	lox.Interpreter.interpret(statements)
+	lox.Interpreter.interpret(statements, replMode)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

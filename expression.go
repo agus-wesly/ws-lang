@@ -4,6 +4,9 @@ type Expression interface {
 	accept(ExpressionVisitor) (any, error)
 }
 
+type Nil struct {
+}
+
 type Literal struct {
 	Value interface{}
 }
@@ -26,16 +29,16 @@ func CreateVar(name Token) *Var {
 }
 
 func (varExpr *Var) accept(v ExpressionVisitor) (any, error) {
-    return v.VisitIdentifier(varExpr)
+	return v.VisitIdentifier(varExpr)
 }
 
 type Assignment struct {
-    Name Token
+	Name Token
 }
 
 func CreateAssignment(name Token) *Assignment {
 	return &Assignment{
-        Name: name,
+		Name: name,
 	}
 }
 func (a *Assignment) accept(v ExpressionVisitor) (any, error) {

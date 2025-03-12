@@ -29,12 +29,16 @@ func CreateInterpreter() *Interpreter {
 	}
 }
 
-func (i *Interpreter) interpret(statements []Statement) {
+func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 	for _, stmt := range statements {
-		err := stmt.accept(i)
+		res, err := stmt.accept(i)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
+		}
+
+		if replMode && res != nil {
+			fmt.Println(res)
 		}
 	}
 }
@@ -53,23 +57,23 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	return (i.Values[name]), nil
 }
 
-func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) error {
+func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	name := v.Identifier.Lexeme
 	var value any = v.Expr
 	if value != nil {
 		exprValue, err := v.Expr.accept(i)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		value = exprValue
 	}
 	_, err := i.Environment.GetCurrentBlock(name)
 	if err == nil {
 		// Variable is redeclared
-		return CreateRuntimeError(&v.Identifier, "Redeclaration of name "+name)
+		return nil, CreateRuntimeError(&v.Identifier, "Redeclaration of name "+name)
 	}
 	i.Environment.Set(name, value)
-	return nil
+	return value, nil
 }
 
 func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
@@ -78,7 +82,7 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 
 	i.Environment = newEnv
 	for _, stmt := range b.Statements {
-		err := stmt.accept(i)
+		_, err := stmt.accept(i)
 		if err != nil {
 			return err
 		}
@@ -101,12 +105,12 @@ func (i *Interpreter) VisitAssignment(a *Assignment) (any, error) {
 	panic("TODO")
 }
 
-func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) error {
-	_, err := i.evaluate(p.Expr)
+func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) (any, error) {
+	val, err := i.evaluate(p.Expr)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return val, nil
 }
 
 func (i *Interpreter) VisitGrouping(g *Grouping) (any, error) {
@@ -238,6 +242,10 @@ func (i *Interpreter) VisitIdentifier(identifier *Var) (any, error) {
 	val, err := i.Environment.Get(identifier.name.Lexeme)
 	if err != nil {
 		return nil, err
+	}
+	_, isUninitialized := val.(Nil)
+	if isUninitialized {
+		return nil, CreateRuntimeError(&identifier.name, "Variable must be initialized before used")
 	}
 	return val, nil
 }

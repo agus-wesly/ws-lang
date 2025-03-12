@@ -76,7 +76,7 @@ func (p *Parser) varDeclaration() (Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	var initValue Expression = nil
+	var initValue Expression = CreateLiteral(Nil{})
 	if p.match(EQUAL) {
 		expr, err := p.parseExpression()
 		if err != nil {
@@ -109,7 +109,7 @@ func (p *Parser) parseExpressionStatement() (Statement, error) {
 		return nil, err
 	}
 
-	_, err = p.consume(SEMICOLON, "Expected ; after expression")
+    _, err = p.consume(SEMICOLON, "Expected ; after expression: " + p.peek().Lexeme)
 	if err != nil {
 		return nil, err
 	}

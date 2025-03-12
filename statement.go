@@ -1,13 +1,13 @@
 package main
 
 type Statement interface {
-	accept(StatementVisitor) error
+	accept(StatementVisitor) (any, error)
 }
 
 type StatementVisitor interface {
-	VisitExpressionStatement(e *ExpressionStatement) error
+	VisitExpressionStatement(e *ExpressionStatement) (any, error)
 	VisitPrintStatement(p *PrintStatement) error
-    VisitVarDeclaration(v *VarDeclaration) error
+    VisitVarDeclaration(v *VarDeclaration) (any, error)
     VisitBlockStatement(v *BlockStatement) error
 }
 
@@ -15,7 +15,7 @@ type ExpressionStatement struct {
 	Expr Expression
 }
 
-func (e *ExpressionStatement) accept(visitor StatementVisitor) error {
+func (e *ExpressionStatement) accept(visitor StatementVisitor) (any, error){
 	return visitor.VisitExpressionStatement(e)
 }
 
@@ -29,8 +29,8 @@ type PrintStatement struct {
 	Expr Expression
 }
 
-func (p *PrintStatement) accept(visitor StatementVisitor) error {
-	return visitor.VisitPrintStatement(p)
+func (p *PrintStatement) accept(visitor StatementVisitor) (any, error) {
+	return nil, visitor.VisitPrintStatement(p)
 }
 
 func CreatePrintStatement(expr Expression) *PrintStatement {
@@ -44,7 +44,7 @@ type VarDeclaration struct {
 	Expr Expression
 }
 
-func (v *VarDeclaration) accept(visitor StatementVisitor) error {
+func (v *VarDeclaration) accept(visitor StatementVisitor) (any, error) {
 	return visitor.VisitVarDeclaration(v)
 }
 
@@ -75,8 +75,8 @@ type BlockStatement struct {
     Statements []Statement
 }
 
-func (b *BlockStatement) accept(visitor StatementVisitor)  error {
-	return visitor.VisitBlockStatement(b)
+func (b *BlockStatement) accept(visitor StatementVisitor) (any,  error) {
+	return nil, visitor.VisitBlockStatement(b)
 }
 
 func CreateBlock(statements []Statement) *BlockStatement {
