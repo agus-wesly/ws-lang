@@ -8,7 +8,7 @@ import (
 
 type ExpressionVisitor interface {
 	VisitLiteral(l *Literal) any
-	VisitIdentifier(i *Var) any
+	VisitIdentifier(i *Var) (any, error)
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
 	VisitTernary(t *Ternary) (any, error)
@@ -24,7 +24,7 @@ type Interpreter struct {
 func CreateInterpreter() *Interpreter {
 	return &Interpreter{
 		Environment: &Environment{
-			values: make(map[string]any),
+			Values: make(map[string]any),
 		},
 	}
 }
@@ -41,7 +41,7 @@ func (i *Interpreter) interpret(statements []Statement) {
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
-	_, ok := i.values[name]
+	_, ok := i.Values[name]
 	if !ok {
 		return nil, CreateRuntimeError(&v.Token, "Unknown variable: "+name)
 	}
@@ -50,7 +50,7 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 		return nil, err
 	}
 	i.Set(name, val)
-	return (i.values[name]), nil
+	return (i.Values[name]), nil
 }
 
 func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) error {
@@ -63,7 +63,27 @@ func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) error {
 		}
 		value = exprValue
 	}
+	_, err := i.Environment.GetCurrentBlock(name)
+	if err == nil {
+		// Variable is redeclared
+		return CreateRuntimeError(&v.Identifier, "Redeclaration of name "+name)
+	}
 	i.Environment.Set(name, value)
+	return nil
+}
+
+func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
+	prevEnv := i.Environment
+	newEnv := CreateEnvironment(*prevEnv, make(map[string]any))
+
+	i.Environment = newEnv
+	for _, stmt := range b.Statements {
+		err := stmt.accept(i)
+		if err != nil {
+			return err
+		}
+	}
+	i.Environment = prevEnv
 	return nil
 }
 
@@ -214,8 +234,12 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 	return l.Value
 }
 
-func (i *Interpreter) VisitIdentifier(identifier *Var) any {
-	return i.Environment.Get(identifier.name.Lexeme)
+func (i *Interpreter) VisitIdentifier(identifier *Var) (any, error) {
+	val, err := i.Environment.Get(identifier.name.Lexeme)
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
 }
 
 func (i *Interpreter) evaluate(exp Expression) (any, error) {

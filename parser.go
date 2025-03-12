@@ -34,6 +34,9 @@ func (p *Parser) declaration() (Statement, error) {
 	if p.match(LET) {
 		return p.varDeclaration()
 	}
+	if p.match(LEFT_BRACE) {
+		return p.block()
+	}
 	return p.statement()
 }
 
@@ -50,6 +53,22 @@ func (p *Parser) statement() (Statement, error) {
 		return nil, err
 	}
 	return parsed, nil
+}
+
+func (p *Parser) block() (Statement, error) {
+	statements := make([]Statement, 0)
+	for !p.match(RIGHT_BRACE) && !p.isAtEnd() {
+		stmt, err := p.declaration()
+		if err != nil {
+			return nil, err
+		}
+		statements = append(statements, stmt)
+	}
+	prev := p.previous()
+	if prev.Type != RIGHT_BRACE {
+		return nil, CreateRuntimeError(&prev, "Expected closing bracket '}'")
+	}
+	return CreateBlock(statements), nil
 }
 
 func (p *Parser) varDeclaration() (Statement, error) {
@@ -111,14 +130,14 @@ func (p *Parser) parseAssignment() (Expression, error) {
 		// Check if expr is var
 		exprVar, ok := expr.(*Var)
 		if !ok {
-		    // If not then it must return error
+			// If not then it must return error
 			return nil, CreateRuntimeError(p.peek(), "Invalid identifier")
 		}
-        value, err := p.parseComma()
-        if err != nil {
-            return nil, err
-        }
-        return CreateVarAssignment(exprVar.name, value), nil
+		value, err := p.parseComma()
+		if err != nil {
+			return nil, err
+		}
+		return CreateVarAssignment(exprVar.name, value), nil
 	}
 	return expr, nil
 }

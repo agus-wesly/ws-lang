@@ -26,7 +26,7 @@ func CreateVar(name Token) *Var {
 }
 
 func (varExpr *Var) accept(v ExpressionVisitor) (any, error) {
-    return v.VisitIdentifier(varExpr), nil
+    return v.VisitIdentifier(varExpr)
 }
 
 type Assignment struct {

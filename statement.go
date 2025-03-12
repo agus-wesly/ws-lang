@@ -8,6 +8,7 @@ type StatementVisitor interface {
 	VisitExpressionStatement(e *ExpressionStatement) error
 	VisitPrintStatement(p *PrintStatement) error
     VisitVarDeclaration(v *VarDeclaration) error
+    VisitBlockStatement(v *BlockStatement) error
 }
 
 type ExpressionStatement struct {
@@ -67,5 +68,19 @@ func CreateVarAssignment(token Token, expr Expression) *VarAssignment {
 	return &VarAssignment{
         Token: token,
         Expr: expr,
+	}
+}
+
+type BlockStatement struct {
+    Statements []Statement
+}
+
+func (b *BlockStatement) accept(visitor StatementVisitor)  error {
+	return visitor.VisitBlockStatement(b)
+}
+
+func CreateBlock(statements []Statement) *BlockStatement {
+	return &BlockStatement{
+        Statements: statements,
 	}
 }
