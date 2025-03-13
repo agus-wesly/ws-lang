@@ -21,7 +21,7 @@ func TestScannerParserAndInterpreter(t *testing.T) {
 	}
 	parser := CreateParser(tokens, &lox)
 	statements, err := parser.parse()
-	lox.Interpreter.interpret(statements)
+	lox.Interpreter.interpret(statements, false)
 	if err != nil {
 		t.Error(err)
 		return

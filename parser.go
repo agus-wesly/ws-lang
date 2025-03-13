@@ -51,6 +51,9 @@ func (p *Parser) statement() (Statement, error) {
 	if p.match(IF) {
 		return p.parseIf()
 	}
+	if p.match(WHILE) {
+		return p.parseWhile()
+	}
 
 	parsed, err := p.parseExpressionStatement()
 	if err != nil {
@@ -88,6 +91,31 @@ func (p *Parser) parseIf() (Statement, error) {
 	}
 
 	return CreateIfStatement(expr, ifStmt, elseStmt), nil
+}
+
+// while (expr) stmt
+func (p *Parser) parseWhile() (Statement, error) {
+	_, err := p.consume(LEFT_PAREN, "expected left parentheses ( after if keyword")
+	if err != nil {
+		return nil, err
+	}
+
+	expr, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.consume(RIGHT_PAREN, "expected right parentheses )")
+	if err != nil {
+		return nil, err
+	}
+
+	stmt, err := p.block()
+	if err != nil {
+		return nil, err
+	}
+
+	return CreateWhileStatement(expr, stmt), nil
 }
 
 func (p *Parser) block() (Statement, error) {

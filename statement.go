@@ -10,6 +10,7 @@ type StatementVisitor interface {
 	VisitVarDeclaration(v *VarDeclaration) (any, error)
 	VisitBlockStatement(v *BlockStatement) error
 	VisitIfStatement(i *IfStatement) error
+	VisitWhileStatement(w *WhileStatement) error
 }
 
 type ExpressionStatement struct {
@@ -101,5 +102,21 @@ func CreateIfStatement(expr Expression, ifStmt Statement, elseStmt Statement) *I
 		Expr:     expr,
 		IfStmt:   ifStmt,
 		ElseStmt: elseStmt,
+	}
+}
+
+type WhileStatement struct {
+	Expr Expression
+	Stmt Statement
+}
+
+func (w *WhileStatement) accept(visitor StatementVisitor) (any, error) {
+	return nil, visitor.VisitWhileStatement(w)
+}
+
+func CreateWhileStatement(expr Expression, Stmt Statement) *WhileStatement {
+	return &WhileStatement{
+		Expr: expr,
+		Stmt: Stmt,
 	}
 }

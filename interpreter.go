@@ -46,15 +46,20 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
-	_, ok := i.Values[name]
-	if !ok {
+	_, err := i.Get(name)
+	if err != nil {
 		return nil, CreateRuntimeError(&v.Token, "Unknown variable: "+name)
 	}
+
 	val, err := v.Expr.accept(i)
 	if err != nil {
 		return nil, err
 	}
-	i.Set(name, val)
+	err = i.Assign(name, val)
+	if err != nil {
+		return nil, err
+	}
+
 	return (i.Values[name]), nil
 }
 
@@ -109,6 +114,25 @@ func (i *Interpreter) VisitIfStatement(ifs *IfStatement) error {
 		}
 	}
 
+	return nil
+}
+
+func (i *Interpreter) VisitWhileStatement(w *WhileStatement) error {
+	for {
+		val, err := w.Expr.accept(i)
+		if err != nil {
+			return err
+		}
+
+		if !i.isTruthy(val) {
+			break
+		}
+
+		_, err = w.Stmt.accept(i)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
