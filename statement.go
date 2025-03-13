@@ -7,15 +7,16 @@ type Statement interface {
 type StatementVisitor interface {
 	VisitExpressionStatement(e *ExpressionStatement) (any, error)
 	VisitPrintStatement(p *PrintStatement) error
-    VisitVarDeclaration(v *VarDeclaration) (any, error)
-    VisitBlockStatement(v *BlockStatement) error
+	VisitVarDeclaration(v *VarDeclaration) (any, error)
+	VisitBlockStatement(v *BlockStatement) error
+	VisitIfStatement(i *IfStatement) error
 }
 
 type ExpressionStatement struct {
 	Expr Expression
 }
 
-func (e *ExpressionStatement) accept(visitor StatementVisitor) (any, error){
+func (e *ExpressionStatement) accept(visitor StatementVisitor) (any, error) {
 	return visitor.VisitExpressionStatement(e)
 }
 
@@ -40,8 +41,8 @@ func CreatePrintStatement(expr Expression) *PrintStatement {
 }
 
 type VarDeclaration struct {
-    Identifier Token
-	Expr Expression
+	Identifier Token
+	Expr       Expression
 }
 
 func (v *VarDeclaration) accept(visitor StatementVisitor) (any, error) {
@@ -50,14 +51,14 @@ func (v *VarDeclaration) accept(visitor StatementVisitor) (any, error) {
 
 func CreateVarDeclaration(expr Expression, identifier Token) *VarDeclaration {
 	return &VarDeclaration{
-		Expr: expr,
-        Identifier: identifier,
+		Expr:       expr,
+		Identifier: identifier,
 	}
 }
 
 type VarAssignment struct {
-    Token Token
-	Expr Expression
+	Token Token
+	Expr  Expression
 }
 
 func (v *VarAssignment) accept(visitor ExpressionVisitor) (any, error) {
@@ -66,21 +67,39 @@ func (v *VarAssignment) accept(visitor ExpressionVisitor) (any, error) {
 
 func CreateVarAssignment(token Token, expr Expression) *VarAssignment {
 	return &VarAssignment{
-        Token: token,
-        Expr: expr,
+		Token: token,
+		Expr:  expr,
 	}
 }
 
 type BlockStatement struct {
-    Statements []Statement
+	Statements []Statement
 }
 
-func (b *BlockStatement) accept(visitor StatementVisitor) (any,  error) {
+func (b *BlockStatement) accept(visitor StatementVisitor) (any, error) {
 	return nil, visitor.VisitBlockStatement(b)
 }
 
 func CreateBlock(statements []Statement) *BlockStatement {
 	return &BlockStatement{
-        Statements: statements,
+		Statements: statements,
+	}
+}
+
+type IfStatement struct {
+	Expr     Expression
+	IfStmt   Statement
+	ElseStmt Statement
+}
+
+func (i *IfStatement) accept(visitor StatementVisitor) (any, error) {
+	return nil, visitor.VisitIfStatement(i)
+}
+
+func CreateIfStatement(expr Expression, ifStmt Statement, elseStmt Statement) *IfStatement {
+	return &IfStatement{
+		Expr:     expr,
+		IfStmt:   ifStmt,
+		ElseStmt: elseStmt,
 	}
 }

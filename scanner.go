@@ -85,6 +85,16 @@ func (s *Scanner) processChar() {
 	case ',':
 		s.addToken(COMMA)
 		break
+	case '|':
+		if s.match('|') {
+			s.addToken(OR)
+			break
+		}
+	case '&':
+		if s.match('&') {
+			s.addToken(AND)
+			break
+		}
 	case '=':
 		if s.match('=') {
 			s.addToken(EQUAL_EQUAL)
@@ -268,14 +278,14 @@ func (s *Scanner) alpha() {
 		tokenType = reservedType
 	}
 
-    var literal interface{} = s.Source[s.start:s.current]
-    if tokenType == NIL {
-        literal = nil
-    } else if tokenType == FALSE {
-        literal = false
-    } else if tokenType == TRUE {
-        literal = true
-    }
+	var literal interface{} = s.Source[s.start:s.current]
+	if tokenType == NIL {
+		literal = nil
+	} else if tokenType == FALSE {
+		literal = false
+	} else if tokenType == TRUE {
+		literal = true
+	}
 	s.addTokenLiteral(tokenType, literal)
 }
 

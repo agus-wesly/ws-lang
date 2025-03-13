@@ -12,6 +12,7 @@ type ExpressionVisitor interface {
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
 	VisitTernary(t *Ternary) (any, error)
+	VisitLogicalOperator(l *LogicalOperator) (any, error)
 	VisitGrouping(g *Grouping) (any, error)
 	VisitAssignment(a *Assignment) (any, error)
 	VisitVarAssignment(v *VarAssignment) (any, error)
@@ -91,6 +92,26 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 	return nil
 }
 
+func (i *Interpreter) VisitIfStatement(ifs *IfStatement) error {
+	stmt, err := ifs.Expr.accept(i)
+	if err != nil {
+		return err
+	}
+	if i.isTruthy(stmt) {
+		_, err := ifs.IfStmt.accept(i)
+		if err != nil {
+			return err
+		}
+	} else if ifs.ElseStmt != nil {
+		_, err := ifs.ElseStmt.accept(i)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
 	expr, err := i.evaluate(p.Expr)
 	if err != nil {
@@ -115,6 +136,29 @@ func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) (any, err
 
 func (i *Interpreter) VisitGrouping(g *Grouping) (any, error) {
 	return i.evaluate(g.Expression)
+}
+
+func (i *Interpreter) VisitLogicalOperator(l *LogicalOperator) (any, error) {
+	left, err := l.Left.accept(i)
+	if err != nil {
+		return nil, err
+	}
+
+	if l.Name.Type == OR {
+		if i.isTruthy(left) {
+			return left, nil
+		}
+	} else {
+		if !i.isTruthy(left) {
+			return left, nil
+		}
+	}
+	right, err := l.Right.accept(i)
+	if err != nil {
+		return nil, err
+	}
+
+	return right, nil
 }
 
 func (i *Interpreter) VisitTernary(t *Ternary) (any, error) {

@@ -116,3 +116,21 @@ func CreateGroup(expr Expression) *Grouping {
 func (g *Grouping) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitGrouping(g)
 }
+
+type LogicalOperator struct {
+	Left  Expression
+	Right Expression
+	Name  Token
+}
+
+func (l *LogicalOperator) accept(v ExpressionVisitor) (any, error) {
+	return v.VisitLogicalOperator(l)
+}
+
+func CreateLogicalOperator(left Expression, right Expression, name Token) *LogicalOperator {
+	return &LogicalOperator{
+		Left:  left,
+		Right: right,
+		Name:  name,
+	}
+}

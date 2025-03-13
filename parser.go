@@ -34,9 +34,6 @@ func (p *Parser) declaration() (Statement, error) {
 	if p.match(LET) {
 		return p.varDeclaration()
 	}
-	if p.match(LEFT_BRACE) {
-		return p.block()
-	}
 	return p.statement()
 }
 
@@ -48,11 +45,49 @@ func (p *Parser) statement() (Statement, error) {
 		}
 		return parsed, nil
 	}
+	if p.match(LEFT_BRACE) {
+		return p.block()
+	}
+	if p.match(IF) {
+		return p.parseIf()
+	}
+
 	parsed, err := p.parseExpressionStatement()
 	if err != nil {
 		return nil, err
 	}
 	return parsed, nil
+}
+
+func (p *Parser) parseIf() (Statement, error) {
+	_, err := p.consume(LEFT_PAREN, "expected left parentheses ( after if keyword")
+	if err != nil {
+		return nil, err
+	}
+	expr, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.consume(RIGHT_PAREN, "expected right parentheses ) after expression")
+	if err != nil {
+		return nil, err
+	}
+
+	ifStmt, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+
+	var elseStmt Statement = nil
+	if p.match(ELSE) {
+		elseStmt, err = p.statement()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return CreateIfStatement(expr, ifStmt, elseStmt), nil
 }
 
 func (p *Parser) block() (Statement, error) {
@@ -109,7 +144,7 @@ func (p *Parser) parseExpressionStatement() (Statement, error) {
 		return nil, err
 	}
 
-    _, err = p.consume(SEMICOLON, "Expected ; after expression: " + p.peek().Lexeme)
+	_, err = p.consume(SEMICOLON, "Expected ; after expression: "+p.peek().Lexeme)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +197,7 @@ func (p *Parser) parseComma() (Expression, error) {
 }
 
 func (p *Parser) parseTernary() (Expression, error) {
-	expr, err := p.parseEquality()
+	expr, err := p.parseOr()
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +220,40 @@ func (p *Parser) parseTernary() (Expression, error) {
 		expr = CreateTernary(expr, left, right)
 	}
 	return expr, nil
+}
+
+func (p *Parser) parseOr() (Expression, error) {
+	left, err := p.parseEnd()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.match(OR) {
+		name := p.previous()
+		right, err := p.parseEnd()
+		if err != nil {
+			return nil, err
+		}
+		return CreateLogicalOperator(left, right, name), nil
+	}
+	return left, nil
+}
+
+func (p *Parser) parseEnd() (Expression, error) {
+	left, err := p.parseEquality()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.match(AND) {
+		name := p.previous()
+		right, err := p.parseEquality()
+		if err != nil {
+			return nil, err
+		}
+		return CreateLogicalOperator(left, right, name), nil
+	}
+	return left, nil
 }
 
 // (!=, ==)
