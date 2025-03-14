@@ -69,16 +69,7 @@ func (p *Parser) parseStatement() (Statement, error) {
 }
 
 func (p *Parser) parseIf() (Statement, error) {
-	_, err := p.consume(LEFT_PAREN, "expected left parentheses ( after if keyword")
-	if err != nil {
-		return nil, err
-	}
 	expr, err := p.parseExpression()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = p.consume(RIGHT_PAREN, "expected right parentheses ) after expression")
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +183,7 @@ func (p *Parser) parseBlock() (Statement, error) {
 	}
 	prev := p.previous()
 	if prev.Type != RIGHT_BRACE {
-		return nil, CreateRuntimeError(prev, "Expected closing bracket '}'" + " found " + prev.Lexeme)
+		return nil, CreateRuntimeError(prev, "Expected closing bracket '}'"+" found "+prev.Lexeme)
 	}
 	return CreateBlock(statements), nil
 }
