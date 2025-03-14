@@ -48,7 +48,7 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
 	_, err := i.Get(name)
 	if err != nil {
-		return nil, CreateRuntimeError(&v.Token, "Unknown variable: "+name)
+		return nil, CreateRuntimeError(v.Token, "Unknown variable: "+name)
 	}
 
 	val, err := v.Expr.accept(i)
@@ -76,7 +76,7 @@ func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	_, err := i.Environment.GetCurrentBlock(name)
 	if err == nil {
 		// Variable is redeclared
-		return nil, CreateRuntimeError(&v.Identifier, "Redeclaration of name "+name)
+		return nil, CreateRuntimeError(v.Identifier, "Redeclaration of name "+name)
 	}
 	i.Environment.Set(name, value)
 	return value, nil
@@ -135,6 +135,7 @@ func (i *Interpreter) VisitWhileStatement(w *WhileStatement) error {
 	}
 	return nil
 }
+
 
 func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
 	expr, err := i.evaluate(p.Expr)
@@ -209,67 +210,67 @@ func (i *Interpreter) VisitBinary(b *Binary) (any, error) {
 
 	switch b.Operator.Type {
 	case MINUS:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) - right.(float64), nil
 
 	case PLUS:
-		if err := i.checkExprNumber(&b.Operator, left, right); err == nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err == nil {
 			return left.(float64) + right.(float64), nil
 		}
-		if err := i.checkExprString(&b.Operator, left, right); err == nil {
+		if err := i.checkExprString(b.Operator, left, right); err == nil {
 			return left.(string) + right.(string), nil
 		}
-		if err := i.checkExprString(&b.Operator, left); err == nil {
-			if err := i.checkExprNumber(&b.Operator, right); err == nil {
+		if err := i.checkExprString(b.Operator, left); err == nil {
+			if err := i.checkExprNumber(b.Operator, right); err == nil {
 				return left.(string) + fmt.Sprint(right.(float64)), nil
 			}
 		}
-		if err := i.checkExprNumber(&b.Operator, left); err == nil {
-			if err := i.checkExprString(&b.Operator, right); err == nil {
+		if err := i.checkExprNumber(b.Operator, left); err == nil {
+			if err := i.checkExprString(b.Operator, right); err == nil {
 				return fmt.Sprint(left.(float64)) + right.(string), nil
 			}
 		}
-		return nil, CreateRuntimeError(&b.Operator, "Addition not supported")
+		return nil, CreateRuntimeError(b.Operator, "Addition not supported")
 
 	case SLASH:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		// Divide by 0
 		if right == 0.0 {
-			return nil, CreateRuntimeError(&b.Operator, "Cannot divide by 0")
+			return nil, CreateRuntimeError(b.Operator, "Cannot divide by 0")
 		}
 		return left.(float64) / right.(float64), nil
 
 	case STAR:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) * right.(float64), nil
 
 	case GREATER:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) > right.(float64), nil
 
 	case GREATER_EQUAL:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		r := (left.(float64)) >= (right.(float64))
 		return r, nil
 
 	case LESS:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) < right.(float64), nil
 
 	case LESS_EQUAL:
-		if err := i.checkExprNumber(&b.Operator, left, right); err != nil {
+		if err := i.checkExprNumber(b.Operator, left, right); err != nil {
 			return nil, err
 		}
 		return left.(float64) <= right.(float64), nil
@@ -313,7 +314,7 @@ func (i *Interpreter) VisitIdentifier(identifier *Var) (any, error) {
 	}
 	_, isUninitialized := val.(Nil)
 	if isUninitialized {
-		return nil, CreateRuntimeError(&identifier.name, "Variable must be initialized before used")
+		return nil, CreateRuntimeError(identifier.name, "Variable must be initialized before used")
 	}
 	return val, nil
 }

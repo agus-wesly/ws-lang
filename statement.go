@@ -42,7 +42,7 @@ func CreatePrintStatement(expr Expression) *PrintStatement {
 }
 
 type VarDeclaration struct {
-	Identifier Token
+	Identifier *Token
 	Expr       Expression
 }
 
@@ -50,7 +50,7 @@ func (v *VarDeclaration) accept(visitor StatementVisitor) (any, error) {
 	return visitor.VisitVarDeclaration(v)
 }
 
-func CreateVarDeclaration(expr Expression, identifier Token) *VarDeclaration {
+func CreateVarDeclaration(expr Expression, identifier *Token) *VarDeclaration {
 	return &VarDeclaration{
 		Expr:       expr,
 		Identifier: identifier,
@@ -58,7 +58,7 @@ func CreateVarDeclaration(expr Expression, identifier Token) *VarDeclaration {
 }
 
 type VarAssignment struct {
-	Token Token
+	Token *Token
 	Expr  Expression
 }
 
@@ -66,7 +66,7 @@ func (v *VarAssignment) accept(visitor ExpressionVisitor) (any, error) {
 	return visitor.VisitVarAssignment(v)
 }
 
-func CreateVarAssignment(token Token, expr Expression) *VarAssignment {
+func CreateVarAssignment(token *Token, expr Expression) *VarAssignment {
 	return &VarAssignment{
 		Token: token,
 		Expr:  expr,

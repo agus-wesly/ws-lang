@@ -21,7 +21,7 @@ func CreateParser(tokens []Token, lox *Lox) *Parser {
 func (p *Parser) parse() ([]Statement, error) {
 	arr := []Statement{}
 	for !p.isAtEnd() {
-		stmt, err := p.declaration()
+		stmt, err := p.parseDeclaration()
 		if err != nil {
 			return nil, err
 		}
@@ -30,14 +30,14 @@ func (p *Parser) parse() ([]Statement, error) {
 	return arr, nil
 }
 
-func (p *Parser) declaration() (Statement, error) {
+func (p *Parser) parseDeclaration() (Statement, error) {
 	if p.match(LET) {
-		return p.varDeclaration()
+		return p.parseVarDeclaration()
 	}
-	return p.statement()
+	return p.parseStatement()
 }
 
-func (p *Parser) statement() (Statement, error) {
+func (p *Parser) parseStatement() (Statement, error) {
 	if p.match(PRINT) {
 		parsed, err := p.parsePrint()
 		if err != nil {
@@ -46,13 +46,16 @@ func (p *Parser) statement() (Statement, error) {
 		return parsed, nil
 	}
 	if p.match(LEFT_BRACE) {
-		return p.block()
+		return p.parseBlock()
 	}
 	if p.match(IF) {
 		return p.parseIf()
 	}
 	if p.match(WHILE) {
 		return p.parseWhile()
+	}
+	if p.match(FOR) {
+		return p.parseFor()
 	}
 
 	parsed, err := p.parseExpressionStatement()
@@ -77,14 +80,14 @@ func (p *Parser) parseIf() (Statement, error) {
 		return nil, err
 	}
 
-	ifStmt, err := p.statement()
+	ifStmt, err := p.parseStatement()
 	if err != nil {
 		return nil, err
 	}
 
 	var elseStmt Statement = nil
 	if p.match(ELSE) {
-		elseStmt, err = p.statement()
+		elseStmt, err = p.parseStatement()
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +113,7 @@ func (p *Parser) parseWhile() (Statement, error) {
 		return nil, err
 	}
 
-	stmt, err := p.block()
+	stmt, err := p.parseBlock()
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +121,77 @@ func (p *Parser) parseWhile() (Statement, error) {
 	return CreateWhileStatement(expr, stmt), nil
 }
 
-func (p *Parser) block() (Statement, error) {
+func (p *Parser) parseFor() (Statement, error) {
+	_, err := p.consume(LEFT_PAREN, "Expected left parentheses ')' after for")
+	if err != nil {
+		return nil, err
+	}
+
+	var declr Statement
+	if p.match(SEMICOLON) {
+		declr = nil
+	} else if p.check(LET) {
+		declr, err = p.parseDeclaration()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		declr, err = p.parseExpressionStatement()
+	}
+
+	var condition Expression
+	if p.check(SEMICOLON) {
+		condition = nil
+	} else {
+		condition, err = p.parseExpression()
+	}
+	p.consume(SEMICOLON, "Expected semicolon ';'")
+
+	var incrementer Expression
+	if p.check(RIGHT_PAREN) {
+		incrementer = nil
+	} else {
+		stmt, err := p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+		incrementer = stmt
+	}
+	_, err = p.consume(RIGHT_PAREN, "Expected closing parentheses ')'")
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := p.parseStatement()
+	if err != nil {
+		return nil, err
+	}
+
+	// Construct
+	arrs := []Statement{body}
+	if incrementer != nil {
+		arrs = append(arrs, CreateExpressionStatement(incrementer))
+	}
+	body = CreateBlock(arrs)
+
+	var expr Expression = nil
+	if condition == nil {
+		condition = CreateLiteral(true)
+	}
+	expr = condition
+
+	res := []Statement{CreateWhileStatement(expr, body)}
+	if declr != nil {
+		res = append([]Statement{declr}, res...)
+	}
+
+	return CreateBlock(res), nil
+}
+
+func (p *Parser) parseBlock() (Statement, error) {
 	statements := make([]Statement, 0)
 	for !p.match(RIGHT_BRACE) && !p.isAtEnd() {
-		stmt, err := p.declaration()
+		stmt, err := p.parseDeclaration()
 		if err != nil {
 			return nil, err
 		}
@@ -129,12 +199,12 @@ func (p *Parser) block() (Statement, error) {
 	}
 	prev := p.previous()
 	if prev.Type != RIGHT_BRACE {
-		return nil, CreateRuntimeError(&prev, "Expected closing bracket '}'")
+		return nil, CreateRuntimeError(prev, "Expected closing bracket '}'")
 	}
 	return CreateBlock(statements), nil
 }
 
-func (p *Parser) varDeclaration() (Statement, error) {
+func (p *Parser) parseVarDeclaration() (Statement, error) {
 	identifier, err := p.consume(IDENTIFIER, "Expect variable name")
 	if err != nil {
 		return nil, err
@@ -360,7 +430,7 @@ func (p *Parser) parseUnary() (Expression, error) {
 		if err != nil {
 			return nil, err
 		}
-		return CreateUnary(right, &operand), nil
+		return CreateUnary(right, operand), nil
 	}
 	return p.parsePrimary()
 }
@@ -386,7 +456,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			}
 		}
 	}
-	return nil, CreateRuntimeError(p.peek(), "Unknown symbol")
+	return nil, CreateRuntimeError(p.peek(), "Unknown symbol"+p.peek().Lexeme)
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -397,8 +467,8 @@ func (p *Parser) peek() *Token {
 	return &p.Tokens[p.Current]
 }
 
-func (p *Parser) previous() Token {
-	return p.Tokens[p.Current-1]
+func (p *Parser) previous() *Token {
+	return &p.Tokens[p.Current-1]
 }
 
 func (p *Parser) match(tokenTypes ...TokenType) bool {
@@ -421,7 +491,7 @@ func (p *Parser) check(expr TokenType) bool {
 	return p.Tokens[p.Current].Type == expr
 }
 
-func (p *Parser) advance() Token {
+func (p *Parser) advance() *Token {
 	if !p.isAtEnd() {
 		p.Current += 1
 	}
@@ -429,12 +499,12 @@ func (p *Parser) advance() Token {
 
 }
 
-func (p *Parser) consume(tokenType TokenType, msg string) (Token, error) {
+func (p *Parser) consume(tokenType TokenType, msg string) (*Token, error) {
 	if p.peek().Type == tokenType {
 		p.advance()
 		return p.previous(), nil
 	}
-	return Token{}, CreateRuntimeError(p.peek(), msg)
+	return &Token{}, CreateRuntimeError(p.peek(), msg)
 }
 
 func (p *Parser) error() error {

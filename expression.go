@@ -21,10 +21,10 @@ func (l *Literal) accept(v ExpressionVisitor) (any, error) {
 }
 
 type Var struct {
-	name Token
+	name *Token
 }
 
-func CreateVar(name Token) *Var {
+func CreateVar(name *Token) *Var {
 	return &Var{name: name}
 }
 
@@ -33,10 +33,10 @@ func (varExpr *Var) accept(v ExpressionVisitor) (any, error) {
 }
 
 type Assignment struct {
-	Name Token
+	Name *Token
 }
 
-func CreateAssignment(name Token) *Assignment {
+func CreateAssignment(name *Token) *Assignment {
 	return &Assignment{
 		Name: name,
 	}
@@ -62,11 +62,11 @@ func (u *Unary) accept(v ExpressionVisitor) (any, error) {
 
 type Binary struct {
 	Left     Expression
-	Operator Token
+	Operator *Token
 	Right    Expression
 }
 
-func CreateBinary(left Expression, operator Token, right Expression) *Binary {
+func CreateBinary(left Expression, operator *Token, right Expression) *Binary {
 	return &Binary{
 		Left:     left,
 		Operator: operator,
@@ -120,14 +120,14 @@ func (g *Grouping) accept(v ExpressionVisitor) (any, error) {
 type LogicalOperator struct {
 	Left  Expression
 	Right Expression
-	Name  Token
+	Name  *Token
 }
 
 func (l *LogicalOperator) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitLogicalOperator(l)
 }
 
-func CreateLogicalOperator(left Expression, right Expression, name Token) *LogicalOperator {
+func CreateLogicalOperator(left Expression, right Expression, name *Token) *LogicalOperator {
 	return &LogicalOperator{
 		Left:  left,
 		Right: right,
