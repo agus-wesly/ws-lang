@@ -1,5 +1,7 @@
 package main
 
+import "errors"
+
 type Statement interface {
 	accept(StatementVisitor) (any, error)
 }
@@ -119,4 +121,16 @@ func CreateWhileStatement(expr Expression, Stmt Statement) *WhileStatement {
 		Expr: expr,
 		Stmt: Stmt,
 	}
+}
+
+type BreakStatement struct {}
+
+var BreakStmtErr = errors.New("BreakStatement")
+
+func (b *BreakStatement) accept(visitor StatementVisitor) (any, error) {
+	return nil, BreakStmtErr
+}
+
+func CreateBreakStatement() *BreakStatement {
+	return &BreakStatement{}
 }

@@ -17,6 +17,6 @@ var keywords = map[string]TokenType{
 	"true":   TRUE,
 	"let":    LET,
 	"while":  WHILE,
+	"break":  BREAK,
 	"eof":    EOF,
 }
-

@@ -51,6 +51,7 @@ const (
 	TRUE
 	LET
 	WHILE
+	BREAK
 	EOF
 )
 

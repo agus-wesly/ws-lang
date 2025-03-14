@@ -45,17 +45,20 @@ func (p *Parser) parseStatement() (Statement, error) {
 		}
 		return parsed, nil
 	}
+	if p.match(WHILE) {
+		return p.parseWhile()
+	}
 	if p.match(LEFT_BRACE) {
 		return p.parseBlock()
 	}
 	if p.match(IF) {
 		return p.parseIf()
 	}
-	if p.match(WHILE) {
-		return p.parseWhile()
-	}
 	if p.match(FOR) {
 		return p.parseFor()
+	}
+	if p.match(BREAK) {
+		return p.parseBreak()
 	}
 
 	parsed, err := p.parseExpressionStatement()
@@ -98,22 +101,12 @@ func (p *Parser) parseIf() (Statement, error) {
 
 // while (expr) stmt
 func (p *Parser) parseWhile() (Statement, error) {
-	_, err := p.consume(LEFT_PAREN, "expected left parentheses ( after if keyword")
-	if err != nil {
-		return nil, err
-	}
-
 	expr, err := p.parseExpression()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = p.consume(RIGHT_PAREN, "expected right parentheses )")
-	if err != nil {
-		return nil, err
-	}
-
-	stmt, err := p.parseBlock()
+	stmt, err := p.parseStatement()
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +192,7 @@ func (p *Parser) parseBlock() (Statement, error) {
 	}
 	prev := p.previous()
 	if prev.Type != RIGHT_BRACE {
-		return nil, CreateRuntimeError(prev, "Expected closing bracket '}'")
+		return nil, CreateRuntimeError(prev, "Expected closing bracket '}'" + " found " + prev.Lexeme)
 	}
 	return CreateBlock(statements), nil
 }
@@ -247,6 +240,15 @@ func (p *Parser) parseExpressionStatement() (Statement, error) {
 		return nil, err
 	}
 	return CreateExpressionStatement(expr), nil
+}
+
+func (p *Parser) parseBreak() (Statement, error) {
+	breakStmt := CreateBreakStatement()
+	_, err := p.consume(SEMICOLON, "Expected semicolon")
+	if err != nil {
+		return nil, err
+	}
+	return breakStmt, nil
 }
 
 func (p *Parser) parseExpression() (Expression, error) {

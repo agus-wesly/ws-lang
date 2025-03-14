@@ -90,6 +90,7 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 	for _, stmt := range b.Statements {
 		_, err := stmt.accept(i)
 		if err != nil {
+			i.Environment = prevEnv
 			return err
 		}
 	}
@@ -130,12 +131,14 @@ func (i *Interpreter) VisitWhileStatement(w *WhileStatement) error {
 
 		_, err = w.Stmt.accept(i)
 		if err != nil {
+			if err == BreakStmtErr {
+                break
+			}
 			return err
 		}
 	}
 	return nil
 }
-
 
 func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
 	expr, err := i.evaluate(p.Expr)
