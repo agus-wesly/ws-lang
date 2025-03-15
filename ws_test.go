@@ -8,7 +8,7 @@ import (
 
 func Do(testCase string, expect string) error {
 	lox := Lox{
-		Interpreter: CreateInterpreter(),
+		Interpreter: CreateAndSetupInterpreter(),
 	}
 	scannner := CreateScanner(testCase, &lox)
 	tokens := scannner.scanTokens()

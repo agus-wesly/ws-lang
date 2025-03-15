@@ -20,15 +20,15 @@ func (l *Literal) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitLiteral(l), nil
 }
 
-type Var struct {
+type Identifier struct {
 	name *Token
 }
 
-func CreateVar(name *Token) *Var {
-	return &Var{name: name}
+func CreateIdentifier(name *Token) *Identifier {
+	return &Identifier{name: name}
 }
 
-func (varExpr *Var) accept(v ExpressionVisitor) (any, error) {
+func (varExpr *Identifier) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitIdentifier(varExpr)
 }
 
@@ -132,5 +132,23 @@ func CreateLogicalOperator(left Expression, right Expression, name *Token) *Logi
 		Left:  left,
 		Right: right,
 		Name:  name,
+	}
+}
+
+type Function struct {
+	Identifier Expression
+	Args       *[]Expression
+	Token      *Token
+}
+
+func (f *Function) accept(v ExpressionVisitor) (any, error) {
+	return v.VisitFunction(f)
+}
+
+func CreateFunctionExpression(identifier Expression, args *[]Expression, token *Token) *Function {
+	return &Function{
+		Identifier: identifier,
+		Args:       args,
+		Token:      token,
 	}
 }

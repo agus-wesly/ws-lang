@@ -13,6 +13,7 @@ type StatementVisitor interface {
 	VisitBlockStatement(v *BlockStatement) error
 	VisitIfStatement(i *IfStatement) error
 	VisitWhileStatement(w *WhileStatement) error
+    VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 }
 
 type ExpressionStatement struct {
@@ -56,6 +57,24 @@ func CreateVarDeclaration(expr Expression, identifier *Token) *VarDeclaration {
 	return &VarDeclaration{
 		Expr:       expr,
 		Identifier: identifier,
+	}
+}
+
+type FunctionDeclaration struct {
+	Identifier *Token
+	Params     []*Token
+	Stmts      []Statement
+}
+
+func (f *FunctionDeclaration) accept(visitor StatementVisitor) (any, error) {
+	return visitor.VisitFunctionDeclaration(f)
+}
+
+func CreateFunctionDeclaration(identifier *Token, params []*Token, stmts []Statement) *FunctionDeclaration {
+	return &FunctionDeclaration{
+		Identifier: identifier,
+		Params:     params,
+		Stmts:      stmts,
 	}
 }
 
@@ -123,7 +142,7 @@ func CreateWhileStatement(expr Expression, Stmt Statement) *WhileStatement {
 	}
 }
 
-type BreakStatement struct {}
+type BreakStatement struct{}
 
 var BreakStmtErr = errors.New("BreakStatement")
 

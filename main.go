@@ -19,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 	lox := Lox{
-		Interpreter: CreateInterpreter(),
+		Interpreter: CreateAndSetupInterpreter(),
 	}
 	// Todo : initialize the interpreter in global var
 	// so when running in CLI, the variabel is persisted

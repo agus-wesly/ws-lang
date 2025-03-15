@@ -34,6 +34,9 @@ func (p *Parser) parseDeclaration() (Statement, error) {
 	if p.match(LET) {
 		return p.parseVarDeclaration()
 	}
+	if p.match(FUN) {
+		return p.parseFunctionDeclaration()
+	}
 	return p.parseStatement()
 }
 
@@ -49,7 +52,11 @@ func (p *Parser) parseStatement() (Statement, error) {
 		return p.parseWhile()
 	}
 	if p.match(LEFT_BRACE) {
-		return p.parseBlock()
+		statements, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+		return CreateBlock(statements), nil
 	}
 	if p.match(IF) {
 		return p.parseIf()
@@ -172,20 +179,20 @@ func (p *Parser) parseFor() (Statement, error) {
 	return CreateBlock(res), nil
 }
 
-func (p *Parser) parseBlock() (Statement, error) {
+func (p *Parser) block() ([]Statement, error) {
 	statements := make([]Statement, 0)
-	for !p.match(RIGHT_BRACE) && !p.isAtEnd() {
+	for !p.check(RIGHT_BRACE) && !p.isAtEnd() {
 		stmt, err := p.parseDeclaration()
 		if err != nil {
 			return nil, err
 		}
 		statements = append(statements, stmt)
 	}
-	prev := p.previous()
-	if prev.Type != RIGHT_BRACE {
-		return nil, CreateRuntimeError(prev, "Expected closing bracket '}'"+" found "+prev.Lexeme)
+	_, err := p.consume(RIGHT_BRACE, "Expected closing bracket '}'")
+	if err != nil {
+		return nil, err
 	}
-	return CreateBlock(statements), nil
+	return statements, nil
 }
 
 func (p *Parser) parseVarDeclaration() (Statement, error) {
@@ -206,6 +213,52 @@ func (p *Parser) parseVarDeclaration() (Statement, error) {
 		return nil, err
 	}
 	return CreateVarDeclaration(initValue, identifier), nil
+}
+
+func (p *Parser) parseFunctionDeclaration() (Statement, error) {
+	identifier, err := p.consume(IDENTIFIER, "Expected identifier after function declaration")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.consume(LEFT_PAREN, "Expected opening parentheses '(' in function declaration")
+	if err != nil {
+		return nil, err
+	}
+
+	params := []*Token{}
+	if p.match(IDENTIFIER) {
+		params = append(params, p.previous())
+
+		for p.match(COMMA) {
+			param, err := p.consume(IDENTIFIER, "Expected identifier after ','")
+			if err != nil {
+				return nil, err
+			}
+			params = append(params, param)
+		}
+	}
+
+	if len(params) >= 255 {
+		return nil, CreateRuntimeError(identifier, "Can't have more than 255 args")
+	}
+
+	_, err = p.consume(RIGHT_PAREN, "Expected closing parentheses ')'")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.consume(LEFT_BRACE, "Expected opening braces '{' in function declaration")
+	if err != nil {
+		return nil, err
+	}
+
+	stmts, err := p.block()
+	if err != nil {
+		return nil, err
+	}
+
+	return CreateFunctionDeclaration(identifier, params, stmts), nil
 }
 
 func (p *Parser) parsePrint() (Statement, error) {
@@ -254,7 +307,7 @@ func (p *Parser) parseAssignment() (Expression, error) {
 	}
 	if p.match(EQUAL) {
 		// Check if expr is var
-		exprVar, ok := expr.(*Var)
+		exprVar, ok := expr.(*Identifier)
 		if !ok {
 			// If not then it must return error
 			return nil, CreateRuntimeError(p.peek(), "Invalid identifier")
@@ -314,14 +367,14 @@ func (p *Parser) parseTernary() (Expression, error) {
 }
 
 func (p *Parser) parseOr() (Expression, error) {
-	left, err := p.parseEnd()
+	left, err := p.parseAnd()
 	if err != nil {
 		return nil, err
 	}
 
 	if p.match(OR) {
 		name := p.previous()
-		right, err := p.parseEnd()
+		right, err := p.parseAnd()
 		if err != nil {
 			return nil, err
 		}
@@ -330,7 +383,7 @@ func (p *Parser) parseOr() (Expression, error) {
 	return left, nil
 }
 
-func (p *Parser) parseEnd() (Expression, error) {
+func (p *Parser) parseAnd() (Expression, error) {
 	left, err := p.parseEquality()
 	if err != nil {
 		return nil, err
@@ -425,7 +478,40 @@ func (p *Parser) parseUnary() (Expression, error) {
 		}
 		return CreateUnary(right, operand), nil
 	}
-	return p.parsePrimary()
+	return p.parseFunction()
+}
+
+func (p *Parser) parseFunction() (Expression, error) {
+	identifier, err := p.parsePrimary()
+	token := p.previous()
+	if err != nil {
+		return nil, err
+	}
+	for p.match(LEFT_PAREN) {
+		args := []Expression{}
+		if !p.check(RIGHT_PAREN) {
+			expr, err := p.parseTernary()
+			if err != nil {
+				return nil, err
+			}
+
+			args = append(args, expr)
+			for p.match(COMMA) {
+				expr, err = p.parseTernary()
+				if err != nil {
+					return nil, err
+				}
+				args = append(args, expr)
+			}
+		}
+		_, err = p.consume(RIGHT_PAREN, "Expected closing parentheses ')'")
+		if err != nil {
+			return nil, err
+		}
+		identifier = CreateFunctionExpression(identifier, &args, token)
+	}
+
+	return identifier, nil
 }
 
 func (p *Parser) parsePrimary() (Expression, error) {
@@ -434,7 +520,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 		return CreateLiteral(cur.Literal), nil
 	} else if p.match(IDENTIFIER) {
 		cur := p.previous()
-		return CreateVar(cur), nil
+		return CreateIdentifier(cur), nil
 	} else {
 		if p.match(LEFT_PAREN) {
 			expr, err := p.parseExpression()

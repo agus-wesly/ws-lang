@@ -8,7 +8,7 @@ import (
 
 type ExpressionVisitor interface {
 	VisitLiteral(l *Literal) any
-	VisitIdentifier(i *Var) (any, error)
+	VisitIdentifier(i *Identifier) (any, error)
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
 	VisitTernary(t *Ternary) (any, error)
@@ -16,18 +16,19 @@ type ExpressionVisitor interface {
 	VisitGrouping(g *Grouping) (any, error)
 	VisitAssignment(a *Assignment) (any, error)
 	VisitVarAssignment(v *VarAssignment) (any, error)
+	VisitFunction(f *Function) (any, error)
 }
 
 type Interpreter struct {
 	*Environment
 }
 
-func CreateInterpreter() *Interpreter {
-	return &Interpreter{
-		Environment: &Environment{
-			Values: make(map[string]any),
-		},
+func CreateAndSetupInterpreter() *Interpreter {
+	res := &Interpreter{
+		Environment: CreateEnvironment(Environment{}, map[string]any{}),
 	}
+	SetupInterpreter(res)
+	return res
 }
 
 func (i *Interpreter) interpret(statements []Statement, replMode bool) {
@@ -61,6 +62,32 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	}
 
 	return (i.Values[name]), nil
+}
+
+func (i *Interpreter) VisitFunction(f *Function) (any, error) {
+	_calle, err := f.Identifier.accept(i)
+	if err != nil {
+		return nil, err
+	}
+
+	calle, ok := _calle.(Callee)
+	if !ok {
+		return nil, CreateRuntimeError(f.Token, "Identifier `"+f.Token.Lexeme+"` is not a function")
+	}
+	_, err = calle.call(i, f.Args)
+	if err != nil {
+		return nil, err
+	}
+
+    // Todo : when _calle is another function, try to comes up with correct return type
+	return _calle, nil
+}
+
+func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error) {
+	// Save into current scope
+	name := f.Identifier.Lexeme
+	i.Environment.Set(name, f)
+	return nil, nil
 }
 
 func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
@@ -132,7 +159,7 @@ func (i *Interpreter) VisitWhileStatement(w *WhileStatement) error {
 		_, err = w.Stmt.accept(i)
 		if err != nil {
 			if err == BreakStmtErr {
-                break
+				break
 			}
 			return err
 		}
@@ -310,7 +337,7 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 	return l.Value
 }
 
-func (i *Interpreter) VisitIdentifier(identifier *Var) (any, error) {
+func (i *Interpreter) VisitIdentifier(identifier *Identifier) (any, error) {
 	val, err := i.Environment.Get(identifier.name.Lexeme)
 	if err != nil {
 		return nil, err
