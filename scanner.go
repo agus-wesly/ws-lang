@@ -204,12 +204,10 @@ func (s *Scanner) string() {
 	s.addTokenLiteral(STRING, s.Source[s.start+1:s.current-1])
 }
 
-// TODO : Add support for escape sequence
 func (s *Scanner) char() {
 	ch := s.advance()
 	if s.peek() != 39 {
 		s.CreateCompileError(Token{Type: CHAR, Line: s.lineCount, Lexeme: string(s.peek())}, "Invalid char")
-		// TODO : maybe we can change this to actually return error ??
 		s.current = len(s.Source)
 		return
 	}

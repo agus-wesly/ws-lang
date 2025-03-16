@@ -14,7 +14,6 @@ type ExpressionVisitor interface {
 	VisitTernary(t *Ternary) (any, error)
 	VisitLogicalOperator(l *LogicalOperator) (any, error)
 	VisitGrouping(g *Grouping) (any, error)
-	VisitAssignment(a *Assignment) (any, error)
 	VisitVarAssignment(v *VarAssignment) (any, error)
 	VisitFunction(f *Function) (any, error)
 }
@@ -178,14 +177,11 @@ func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
 	if err != nil {
 		return err
 	}
+    // TODO : need to have `.toString()` method to be called
 	fmt.Println(expr)
 	return nil
 }
 
-// a = 5
-func (i *Interpreter) VisitAssignment(a *Assignment) (any, error) {
-	panic("TODO")
-}
 
 func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) (any, error) {
 	val, err := i.evaluate(p.Expr)

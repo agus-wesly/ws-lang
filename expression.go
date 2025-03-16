@@ -41,9 +41,6 @@ func CreateAssignment(name *Token) *Assignment {
 		Name: name,
 	}
 }
-func (a *Assignment) accept(v ExpressionVisitor) (any, error) {
-	return v.VisitAssignment(a)
-}
 
 type Unary struct {
 	Right   Expression
