@@ -23,7 +23,9 @@ func (p *Parser) parse() ([]Statement, error) {
 	for !p.isAtEnd() {
 		stmt, err := p.parseDeclaration()
 		if err != nil {
-			return nil, err
+			arr = append(arr, nil)
+			p.synchronize()
+			continue
 		}
 		arr = append(arr, stmt)
 	}
@@ -595,14 +597,23 @@ func (p *Parser) synchronize() {
 	// WARNING : This might cause an error
 	for !p.isAtEnd() {
 		switch p.peek().Type {
-		case SEMICOLON:
 		case FOR:
+			fallthrough
 		case WHILE:
+			fallthrough
+		case SEMICOLON:
+            p.advance()
+			fallthrough
 		case IF:
+			fallthrough
 		case LET:
+			fallthrough
 		case PRINT:
+			fallthrough
 		case RETURN:
+			fallthrough
 		case CLASS:
+			fallthrough
 		case FUN:
 			return
 		}

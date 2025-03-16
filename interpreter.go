@@ -33,14 +33,16 @@ func CreateAndSetupInterpreter() *Interpreter {
 
 func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 	for _, stmt := range statements {
-		res, err := stmt.accept(i)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
+		if stmt != nil {
+			res, err := stmt.accept(i)
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
 
-		if replMode && res != nil {
-			fmt.Println(res)
+			if replMode && res != nil {
+				fmt.Println(res)
+			}
 		}
 	}
 }
@@ -79,7 +81,7 @@ func (i *Interpreter) VisitFunction(f *Function) (any, error) {
 		return nil, err
 	}
 
-    // Todo : when _calle is another function, try to comes up with correct return type
+	// Todo : when _calle is another function, try to comes up with correct return type
 	return _calle, nil
 }
 
