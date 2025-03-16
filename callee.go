@@ -4,11 +4,11 @@ import "fmt"
 
 type Callee interface {
 	arity() int
-	call(i *Interpreter, args *[]Expression) (any, error)
+	call(i *Interpreter, token *Token, args *[]Expression) (any, error)
 	toString() string
 }
 
-func (f *FunctionDeclaration) call(interpreter *Interpreter, args *[]Expression) (any, error) {
+func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args *[]Expression) (any, error) {
 	prevEnv := interpreter.Environment
 	defer func() {
 		interpreter.Environment = prevEnv
@@ -18,7 +18,7 @@ func (f *FunctionDeclaration) call(interpreter *Interpreter, args *[]Expression)
 	interpreter.Environment = newEnv
 
 	if f.arity() != len(*args) {
-		return nil, CreateRuntimeError(f.Identifier, fmt.Sprintf("Expected %d arguments but got %d .", f.arity(), len(*args)))
+		return nil, CreateRuntimeError(token, fmt.Sprintf("Expected %d arguments but got %d .", f.arity(), len(*args)))
 	}
 
 	for i, param := range f.Params {

@@ -76,7 +76,7 @@ func (i *Interpreter) VisitFunction(f *Function) (any, error) {
 	if !ok {
 		return nil, CreateRuntimeError(f.Token, "Identifier `"+f.Token.Lexeme+"` is not a function")
 	}
-	val, err := calle.call(i, f.Args)
+	val, err := calle.call(i, f.Token, f.Args)
 	if err != nil {
 		return nil, err
 	}
