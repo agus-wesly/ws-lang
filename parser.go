@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 )
 
 type Parser struct {
@@ -23,6 +24,7 @@ func (p *Parser) parse() ([]Statement, error) {
 	for !p.isAtEnd() {
 		stmt, err := p.parseDeclaration()
 		if err != nil {
+			fmt.Println(err.Error())
 			arr = append(arr, nil)
 			p.synchronize()
 			continue
@@ -68,6 +70,9 @@ func (p *Parser) parseStatement() (Statement, error) {
 	}
 	if p.match(BREAK) {
 		return p.parseBreak()
+	}
+	if p.match(RETURN) {
+		return p.parseReturn()
 	}
 
 	parsed, err := p.parseExpressionStatement()
@@ -295,6 +300,24 @@ func (p *Parser) parseBreak() (Statement, error) {
 		return nil, err
 	}
 	return breakStmt, nil
+}
+
+func (p *Parser) parseReturn() (Statement, error) {
+	var expr Expression = nil
+	var err error = nil
+
+	if p.peek().Type != SEMICOLON {
+		expr, err = p.parseExpression()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	token, err := p.consume(SEMICOLON, "Expected ; after expression: "+p.peek().Lexeme)
+	if err != nil {
+		return nil, err
+	}
+	return CreateReturnStatement(token, expr), nil
 }
 
 func (p *Parser) parseExpression() (Expression, error) {
@@ -537,7 +560,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			}
 		}
 	}
-	return nil, CreateRuntimeError(p.peek(), "Unknown symbol"+p.peek().Lexeme)
+	return nil, CreateRuntimeError(p.peek(), "Unknown symbol '"+p.peek().Lexeme + "'")
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -602,7 +625,7 @@ func (p *Parser) synchronize() {
 		case WHILE:
 			fallthrough
 		case SEMICOLON:
-            p.advance()
+			p.advance()
 			fallthrough
 		case IF:
 			fallthrough

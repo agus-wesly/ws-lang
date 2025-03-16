@@ -24,7 +24,7 @@ func CreateScanner(src string, lox *Lox) *Scanner {
 
 		start:     0,
 		current:   0,
-		lineCount: 0,
+		lineCount: 1,
 	}
 }
 

@@ -1,6 +1,9 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Statement interface {
 	accept(StatementVisitor) (any, error)
@@ -13,7 +16,7 @@ type StatementVisitor interface {
 	VisitBlockStatement(v *BlockStatement) error
 	VisitIfStatement(i *IfStatement) error
 	VisitWhileStatement(w *WhileStatement) error
-    VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
+	VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 }
 
 type ExpressionStatement struct {
@@ -152,4 +155,24 @@ func (b *BreakStatement) accept(visitor StatementVisitor) (any, error) {
 
 func CreateBreakStatement() *BreakStatement {
 	return &BreakStatement{}
+}
+
+type ReturnStatement struct {
+	Expr Expression
+	*Token
+}
+
+func (r *ReturnStatement) Error() string {
+	return fmt.Sprintf("[line %d] Runtime Error : Illegal return statement\n", r.Token.Line)
+}
+
+func (r *ReturnStatement) accept(visitor StatementVisitor) (any, error) {
+	return nil, r
+}
+
+func CreateReturnStatement(token *Token, expr Expression) *ReturnStatement {
+	return &ReturnStatement{
+		Expr:  expr,
+		Token: token,
+	}
 }

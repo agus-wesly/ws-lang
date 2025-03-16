@@ -8,9 +8,12 @@ type Callee interface {
 	toString() string
 }
 
-// TODO : maybe this should be Function struct and not FunctionDeclaration ?
 func (f *FunctionDeclaration) call(interpreter *Interpreter, args *[]Expression) (any, error) {
 	prevEnv := interpreter.Environment
+	defer func() {
+		interpreter.Environment = prevEnv
+	}()
+
 	newEnv := CreateEnvironment(*prevEnv, make(map[string]any))
 	interpreter.Environment = newEnv
 
@@ -29,16 +32,31 @@ func (f *FunctionDeclaration) call(interpreter *Interpreter, args *[]Expression)
 	for _, stmt := range f.Stmts {
 		_, err := stmt.accept(interpreter)
 		if err != nil {
+			if returnStmt, ok := err.(*ReturnStatement); ok {
+				// Encountered return keyword
+				return f.handleReturn(interpreter, returnStmt)
+			}
+
 			return nil, err
 		}
 	}
 
-	interpreter.Environment = prevEnv
 	return nil, nil
 }
 
 func (f *FunctionDeclaration) arity() int {
 	return len(f.Params)
+}
+
+func (f *FunctionDeclaration) handleReturn(interpreter *Interpreter, ret *ReturnStatement) (any, error) {
+	if ret.Expr != nil {
+		val, err := ret.Expr.accept(interpreter)
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	}
+	return nil, nil
 }
 
 func (f *FunctionDeclaration) toString() string {

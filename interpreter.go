@@ -76,13 +76,13 @@ func (i *Interpreter) VisitFunction(f *Function) (any, error) {
 	if !ok {
 		return nil, CreateRuntimeError(f.Token, "Identifier `"+f.Token.Lexeme+"` is not a function")
 	}
-	_, err = calle.call(i, f.Args)
+	val, err := calle.call(i, f.Args)
 	if err != nil {
 		return nil, err
 	}
 
 	// Todo : when _calle is another function, try to comes up with correct return type
-	return _calle, nil
+	return val, nil
 }
 
 func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error) {
@@ -98,6 +98,7 @@ func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	if value != nil {
 		exprValue, err := v.Expr.accept(i)
 		if err != nil {
+			fmt.Println("Unreachable in var declr")
 			return nil, err
 		}
 		value = exprValue
@@ -113,6 +114,10 @@ func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 
 func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 	prevEnv := i.Environment
+	defer func() {
+		i.Environment = prevEnv
+	}()
+
 	newEnv := CreateEnvironment(*prevEnv, make(map[string]any))
 
 	i.Environment = newEnv
@@ -123,7 +128,6 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 			return err
 		}
 	}
-	i.Environment = prevEnv
 	return nil
 }
 
