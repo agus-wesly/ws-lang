@@ -85,6 +85,7 @@ func (i *Interpreter) VisitFunction(f *Function) (any, error) {
 }
 
 func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error) {
+	f.Env = i.Environment
 	// Save into current scope
 	name := f.Identifier.Lexeme
 	i.Environment.Set(name, f)
@@ -177,11 +178,10 @@ func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {
 	if err != nil {
 		return err
 	}
-    // TODO : need to have `.toString()` method to be called
+	// TODO : need to have `.toString()` method to be called
 	fmt.Println(expr)
 	return nil
 }
-
 
 func (i *Interpreter) VisitExpressionStatement(p *ExpressionStatement) (any, error) {
 	val, err := i.evaluate(p.Expr)

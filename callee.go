@@ -9,7 +9,7 @@ type Callee interface {
 }
 
 func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args *[]Expression) (any, error) {
-	prevEnv := interpreter.Environment
+	prevEnv := f.Env
 	defer func() {
 		interpreter.Environment = prevEnv
 	}()
