@@ -247,7 +247,7 @@ func (p *Parser) parseFunctionDeclaration() (Statement, error) {
 	}
 
 	if len(params) >= 255 {
-		return nil, CreateRuntimeError(identifier, "Can't have more than 255 args")
+		return nil, p.CreateCompileError(identifier, "Can't have more than 255 args")
 	}
 
 	_, err = p.consume(RIGHT_PAREN, "Expected closing parentheses ')'")
@@ -560,7 +560,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			}
 		}
 	}
-	return nil, CreateRuntimeError(p.peek(), "Unknown symbol '"+p.peek().Lexeme + "'")
+	return nil, CreateRuntimeError(p.peek(), "Unknown symbol '"+p.peek().Lexeme+"'")
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -642,4 +642,9 @@ func (p *Parser) synchronize() {
 		}
 		p.advance()
 	}
+}
+
+func (p *Parser) CreateCompileError(token *Token, msg string) error {
+	p.HadError = true
+	return errors.New(fmt.Sprintf("[line %d] Compile Error : %s\n", token.Line, msg))
 }
