@@ -142,7 +142,7 @@ func (f *Function) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitFunction(f)
 }
 
-func CreateFunctionExpression(identifier Expression, args *[]Expression, token *Token) *Function {
+func CreateFunctionCall(identifier Expression, args *[]Expression, token *Token) *Function {
 	return &Function{
 		Identifier: identifier,
 		Args:       args,

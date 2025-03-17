@@ -39,6 +39,9 @@ func (p *Parser) parseDeclaration() (Statement, error) {
 		return p.parseVarDeclaration()
 	}
 	if p.match(FUN) {
+		if p.match(LEFT_PAREN) {
+			return p.parseFunctionExpression()
+		}
 		return p.parseFunctionDeclaration()
 	}
 	return p.parseStatement()
@@ -228,9 +231,26 @@ func (p *Parser) parseFunctionDeclaration() (Statement, error) {
 		return nil, err
 	}
 
-	_, err = p.consume(LEFT_PAREN, "Expected opening parentheses '(' in function declaration")
+    params, stmts, err := p.parseFunction()
+    if err != nil {
+        return nil, err
+    }
+
+	return CreateFunctionDeclaration(identifier, params, stmts), nil
+}
+
+func (p *Parser) parseFunctionExpression() (Statement, error) {
+	_, _, err := p.parseFunction()
 	if err != nil {
 		return nil, err
+	}
+	panic("TODO")
+}
+
+func (p *Parser) parseFunction() ([]*Token, []Statement, error) {
+	_, err := p.consume(LEFT_PAREN, "Expected opening parentheses '(' in function declaration")
+	if err != nil {
+		return nil, nil, err
 	}
 
 	params := []*Token{}
@@ -240,32 +260,32 @@ func (p *Parser) parseFunctionDeclaration() (Statement, error) {
 		for p.match(COMMA) {
 			param, err := p.consume(IDENTIFIER, "Expected identifier after ','")
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			params = append(params, param)
 		}
 	}
 
 	if len(params) >= 255 {
-		return nil, p.CreateCompileError(identifier, "Can't have more than 255 args")
+		return nil, nil, p.CreateCompileError(p.peek(), "Can't have more than 255 args")
 	}
 
 	_, err = p.consume(RIGHT_PAREN, "Expected closing parentheses ')'")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	_, err = p.consume(LEFT_BRACE, "Expected opening braces '{' in function declaration")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	stmts, err := p.block()
+	stmt, err := p.block()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return CreateFunctionDeclaration(identifier, params, stmts), nil
+	return params, stmt, nil
 }
 
 func (p *Parser) parsePrint() (Statement, error) {
@@ -503,10 +523,10 @@ func (p *Parser) parseUnary() (Expression, error) {
 		}
 		return CreateUnary(right, operand), nil
 	}
-	return p.parseFunction()
+	return p.parseFunctionCall()
 }
 
-func (p *Parser) parseFunction() (Expression, error) {
+func (p *Parser) parseFunctionCall() (Expression, error) {
 	identifier, err := p.parsePrimary()
 	token := p.previous()
 	if err != nil {
@@ -533,7 +553,7 @@ func (p *Parser) parseFunction() (Expression, error) {
 		if err != nil {
 			return nil, err
 		}
-		identifier = CreateFunctionExpression(identifier, &args, token)
+		identifier = CreateFunctionCall(identifier, &args, token)
 	}
 
 	return identifier, nil
