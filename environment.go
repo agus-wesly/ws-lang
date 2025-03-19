@@ -11,7 +11,7 @@ type Environment struct {
 	*Interpreter
 }
 
-func (env *Environment) Get(name string, expr Expression) (any, error) {
+func (env *Environment) _Get(name string, expr Expression) (any, error) {
 	distance, ok := env.Interpreter.Locals[expr]
 	if !ok {
 		res := env.findInGlobal(name)
@@ -51,21 +51,14 @@ func (env *Environment) findInGlobal(name string) any {
 
 }
 
-func (env *Environment) _Get(name string) (any, error) {
-	if true {
-		panic("Disabled")
-	}
+func (env *Environment) Get(name string) (any, error) {
 	res, found := env.Values[name]
-
-	// Get the distance
-
-	// Go through the target map based on the distance
 
 	if !found {
 		if env.PrevEnv == nil {
 			return nil, errors.New(name + " is not defined")
 		}
-		val, err := env.PrevEnv.Get(name, nil)
+		val, err := env.PrevEnv.Get(name)
 		if err != nil {
 			return nil, errors.New(name + " is not defined.")
 		}

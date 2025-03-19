@@ -52,7 +52,7 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
-	_, err := i.Get(name, v)
+	_, err := i.Get(name)
 	if err != nil {
 		return nil, CreateRuntimeError(v.Token, "Unknown variable: "+name)
 	}
@@ -97,6 +97,7 @@ func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, err
 }
 
 func (i *Interpreter) VisitReturnStatement(r *ReturnStatement) error {
+	// TODO : fix this so that it will evaluate in HERE not in the function call
 	return r
 }
 
@@ -120,6 +121,7 @@ func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	return value, nil
 }
 
+// TODO : this should return value, not just error
 func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 	prevEnv := i.Environment
 	defer func() {
@@ -348,7 +350,7 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 }
 
 func (i *Interpreter) VisitIdentifier(identifier *Identifier) (any, error) {
-	val, err := i.Environment.Get(identifier.name.Lexeme, identifier)
+	val, err := i.Environment.Get(identifier.name.Lexeme)
 	if err != nil {
 		return nil, err
 	}
