@@ -10,6 +10,7 @@ import (
 type Lox struct {
 	HadError bool
 	*Interpreter
+	*Resolver
 }
 
 func main() {
@@ -18,11 +19,11 @@ func main() {
 		fmt.Println("Usage : jlox [help]")
 		os.Exit(1)
 	}
+	interpreter := CreateAndSetupInterpreter()
 	lox := Lox{
-		Interpreter: CreateAndSetupInterpreter(),
+		Interpreter: interpreter,
+		Resolver:    CreateResolver(interpreter, make([]map[string]bool, 0)),
 	}
-	// Todo : initialize the interpreter in global var
-	// so when running in CLI, the variabel is persisted
 	if len(args) == 2 {
 		byt, err := os.ReadFile(args[1])
 		if err != nil {
