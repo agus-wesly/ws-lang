@@ -7,11 +7,21 @@ type Resolver struct {
 	Scopes []map[string]bool
 }
 
-func (r *Resolver) VisitVarDeclaration(v *VarDeclaration) (any, error) {
-	// Create and push to scope
-	r.beginScope()
-	defer r.endScope()
+func CreateResolver(interpreter *Interpreter, scopes []map[string]bool) *Resolver {
+	return &Resolver{
+		Interpreter: interpreter,
+		Scopes:      scopes,
+	}
+}
 
+func (r *Resolver) resolve(statements []Statement) {
+	for _, stmt := range statements {
+		// Check this :
+		stmt.accept(r)
+	}
+}
+
+func (r *Resolver) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	r.declare(v.Identifier)
 	r.resolveExpr(v.Expr)
 	r.define(v.Identifier)
@@ -20,15 +30,15 @@ func (r *Resolver) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 }
 
 func (r *Resolver) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error) {
-	r.define(f.Identifier)
 	r.declare(f.Identifier)
+	r.define(f.Identifier)
 
 	r.beginScope()
 	defer r.endScope()
 
 	for _, param := range f.Params {
-		r.define(param)
 		r.declare(param)
+		r.define(param)
 	}
 
 	for _, stmt := range f.Stmts {
@@ -38,11 +48,13 @@ func (r *Resolver) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 	return nil, nil
 }
 
+func (r *Resolver) VisitReturnStatement(ret *ReturnStatement) error {
+	r.resolveExpr(ret.Expr)
+	return nil
+}
+
 func (r *Resolver) VisitIfStatement(i *IfStatement) error {
 	r.resolveExpr(i.Expr)
-
-	r.beginScope()
-	defer r.endScope()
 
 	r.resolveStmt(i.IfStmt)
 	if i.ElseStmt != nil {
@@ -64,6 +76,7 @@ func (r *Resolver) VisitWhileStatement(w *WhileStatement) error {
 }
 
 func (r *Resolver) VisitBlockStatement(b *BlockStatement) error {
+	// fmt.Println("Visited block")
 	r.beginScope()
 	defer r.endScope()
 
@@ -86,13 +99,19 @@ func (r *Resolver) VisitExpressionStatement(e *ExpressionStatement) (any, error)
 }
 
 func (r *Resolver) VisitFunction(f *Function) (any, error) {
-	// TODO : change in Function struct to use Identifier not expr
-	r.resolveFinal(f.Identifier)
+	r.resolveExpr(f.Identifier)
+
+	// r.beginScope()
+	// defer r.endScope()
+
+	for _, arg := range *f.Args {
+		r.resolveExpr(arg)
+	}
 	return nil, nil
 }
 
 func (r *Resolver) VisitVarAssignment(v *VarAssignment) (any, error) {
-	r.resolveFinal(v.Token)
+	r.resolveFinal(v.Token, v)
 	r.resolveExpr(v.Expr)
 
 	return nil, nil
@@ -134,7 +153,7 @@ func (r *Resolver) VisitUnary(u *Unary) (any, error) {
 
 func (r *Resolver) VisitIdentifier(i *Identifier) (any, error) {
 	// Begin search
-	r.resolveFinal(i.name)
+	r.resolveFinal(i.name, i)
 	// Attach to the node
 	return nil, nil
 }
@@ -143,19 +162,22 @@ func (r *Resolver) VisitLiteral(l *Literal) any {
 	return nil
 }
 
-func (r *Resolver) resolveFinal(token *Token) {
+func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 	for idx := len(r.Scopes) - 1; idx >= 0; idx -= 1 {
 		curr := r.Scopes[idx]
 		val, ok := curr[token.Lexeme]
 		if ok {
 			if !val {
-				panic("Found but not yet defined")
+				panic("TODO : Found but not yet defined")
 			}
-			panic(fmt.Sprintf("Get the distance : %d\n", len(r.Scopes)-1-idx))
+			dist := len(r.Scopes) - 1 - idx
+			fmt.Println(token.Lexeme, len(r.Scopes), idx)
+			r.Interpreter.Locals[expr] = dist
+
+			break
+			// panic(fmt.Sprintf("Get the distance : %d\n", dist))
 		}
 	}
-
-	panic("TODO : search in global env")
 }
 
 func (r *Resolver) declare(token *Token) {

@@ -20,14 +20,18 @@ type ExpressionVisitor interface {
 
 type Interpreter struct {
 	*Environment
+	Locals map[Expression]int
 }
 
 func CreateAndSetupInterpreter() *Interpreter {
-	res := &Interpreter{
-		Environment: CreateEnvironment(Environment{}, map[string]any{}),
+	interpreter := &Interpreter{
+		Environment: CreateEnvironment(nil, map[string]any{}, nil),
+		Locals:      make(map[Expression]int),
 	}
-	SetupInterpreter(res)
-	return res
+	interpreter.Environment.Interpreter = interpreter
+	SetupInterpreter(interpreter)
+
+	return interpreter
 }
 
 func (i *Interpreter) interpret(statements []Statement, replMode bool) {
@@ -48,7 +52,7 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
-	_, err := i.Get(name)
+	_, err := i.Get(name, v)
 	if err != nil {
 		return nil, CreateRuntimeError(v.Token, "Unknown variable: "+name)
 	}
@@ -92,6 +96,10 @@ func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, err
 	return nil, nil
 }
 
+func (i *Interpreter) VisitReturnStatement(r *ReturnStatement) error {
+	return r
+}
+
 func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	name := v.Identifier.Lexeme
 	var value any = v.Expr
@@ -118,13 +126,13 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 		i.Environment = prevEnv
 	}()
 
-	newEnv := CreateEnvironment(*prevEnv, make(map[string]any))
+	newEnv := CreateEnvironment(prevEnv, make(map[string]any), i)
 
 	i.Environment = newEnv
 	for _, stmt := range b.Statements {
 		_, err := stmt.accept(i)
 		if err != nil {
-			i.Environment = prevEnv
+			// i.Environment = prevEnv
 			return err
 		}
 	}
@@ -340,7 +348,7 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 }
 
 func (i *Interpreter) VisitIdentifier(identifier *Identifier) (any, error) {
-	val, err := i.Environment.Get(identifier.name.Lexeme)
+	val, err := i.Environment.Get(identifier.name.Lexeme, identifier)
 	if err != nil {
 		return nil, err
 	}

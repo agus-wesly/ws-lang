@@ -78,6 +78,7 @@ func (lox *Lox) run(source string, replMode bool) {
 	}
 	parser := CreateParser(tokens, lox)
 	statements, err := parser.parse()
+    // lox.Resolver.resolve(statements)
 	lox.Interpreter.interpret(statements, replMode)
 	if err != nil {
 		fmt.Println(err.Error())

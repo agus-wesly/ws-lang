@@ -17,6 +17,7 @@ type StatementVisitor interface {
 	VisitIfStatement(i *IfStatement) error
 	VisitWhileStatement(w *WhileStatement) error
 	VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
+    VisitReturnStatement(r *ReturnStatement) (error)
 }
 
 type ExpressionStatement struct {
@@ -168,7 +169,7 @@ func (r *ReturnStatement) Error() string {
 }
 
 func (r *ReturnStatement) accept(visitor StatementVisitor) (any, error) {
-	return nil, r
+    return nil, visitor.VisitReturnStatement(r)
 }
 
 func CreateReturnStatement(token *Token, expr Expression) *ReturnStatement {
