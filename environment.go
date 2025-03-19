@@ -9,6 +9,12 @@ type Environment struct {
 
 func (env *Environment) Get(name string) (any, error) {
 	res, found := env.Values[name]
+
+    // Get the distance
+    // Go through the target map based on the distance
+
+    panic("TODO")
+
 	if !found {
 		if env.PrevEnv == nil {
 			return nil, errors.New(name + " is not defined")
