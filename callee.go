@@ -9,7 +9,8 @@ type Callee interface {
 }
 
 func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args *[]Expression) (any, error) {
-	prevEnv := f.Env
+	// prevEnv := f.Env
+	prevEnv := interpreter.Environment
 	defer func() {
 		interpreter.Environment = prevEnv
 	}()
@@ -30,11 +31,12 @@ func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args 
 	}
 
 	for _, stmt := range f.Stmts {
-		_, err := stmt.accept(interpreter)
+		val, err := stmt.accept(interpreter)
 		if err != nil {
-			if returnStmt, ok := err.(*ReturnStatement); ok {
+			if _, ok := err.(*ReturnStatement); ok {
 				// Encountered return keyword
-				return f.handleReturn(interpreter, returnStmt)
+				//return f.handleReturn(interpreter, returnStmt)
+                return val, nil
 			}
 
 			return nil, err

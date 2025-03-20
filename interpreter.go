@@ -96,9 +96,15 @@ func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, err
 	return nil, nil
 }
 
-func (i *Interpreter) VisitReturnStatement(r *ReturnStatement) error {
-	// TODO : fix this so that it will evaluate in HERE not in the function call
-	return r
+func (i *Interpreter) VisitReturnStatement(r *ReturnStatement) (any, error) {
+	if r.Expr == nil {
+		return nil, r
+	}
+	val, err := r.Expr.accept(i)
+	if err != nil {
+		return nil, err
+	}
+	return val, r
 }
 
 func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
@@ -121,8 +127,7 @@ func (i *Interpreter) VisitVarDeclaration(v *VarDeclaration) (any, error) {
 	return value, nil
 }
 
-// TODO : this should return value, not just error
-func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
+func (i *Interpreter) VisitBlockStatement(b *BlockStatement) (any, error) {
 	prevEnv := i.Environment
 	defer func() {
 		i.Environment = prevEnv
@@ -132,55 +137,55 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) error {
 
 	i.Environment = newEnv
 	for _, stmt := range b.Statements {
-		_, err := stmt.accept(i)
+		val, err := stmt.accept(i)
 		if err != nil {
 			// i.Environment = prevEnv
-			return err
+			return val, err
 		}
 	}
-	return nil
+	return nil, nil
 }
 
-func (i *Interpreter) VisitIfStatement(ifs *IfStatement) error {
+func (i *Interpreter) VisitIfStatement(ifs *IfStatement) (any, error) {
 	stmt, err := ifs.Expr.accept(i)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if i.isTruthy(stmt) {
-		_, err := ifs.IfStmt.accept(i)
+		val, err := ifs.IfStmt.accept(i)
 		if err != nil {
-			return err
+			return val, err
 		}
 	} else if ifs.ElseStmt != nil {
-		_, err := ifs.ElseStmt.accept(i)
+		val, err := ifs.ElseStmt.accept(i)
 		if err != nil {
-			return err
+			return val, err
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
-func (i *Interpreter) VisitWhileStatement(w *WhileStatement) error {
+func (i *Interpreter) VisitWhileStatement(w *WhileStatement) (any, error) {
 	for {
 		val, err := w.Expr.accept(i)
 		if err != nil {
-			return err
+			return val, err
 		}
 
 		if !i.isTruthy(val) {
 			break
 		}
 
-		_, err = w.Stmt.accept(i)
+		val, err = w.Stmt.accept(i)
 		if err != nil {
 			if err == BreakStmtErr {
 				break
 			}
-			return err
+			return val, err
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func (i *Interpreter) VisitPrintStatement(p *PrintStatement) error {

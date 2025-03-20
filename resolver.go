@@ -48,12 +48,12 @@ func (r *Resolver) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 	return nil, nil
 }
 
-func (r *Resolver) VisitReturnStatement(ret *ReturnStatement) error {
+func (r *Resolver) VisitReturnStatement(ret *ReturnStatement) (any, error) {
 	r.resolveExpr(ret.Expr)
-	return nil
+	return nil, nil
 }
 
-func (r *Resolver) VisitIfStatement(i *IfStatement) error {
+func (r *Resolver) VisitIfStatement(i *IfStatement) (any, error) {
 	r.resolveExpr(i.Expr)
 
 	r.resolveStmt(i.IfStmt)
@@ -61,10 +61,10 @@ func (r *Resolver) VisitIfStatement(i *IfStatement) error {
 		r.resolveStmt(i.ElseStmt)
 	}
 
-	return nil
+	return nil, nil
 }
 
-func (r *Resolver) VisitWhileStatement(w *WhileStatement) error {
+func (r *Resolver) VisitWhileStatement(w *WhileStatement) (any, error) {
 	r.resolveExpr(w.Expr)
 
 	r.beginScope()
@@ -72,10 +72,10 @@ func (r *Resolver) VisitWhileStatement(w *WhileStatement) error {
 
 	r.resolveStmt(w.Stmt)
 
-	return nil
+	return nil, nil
 }
 
-func (r *Resolver) VisitBlockStatement(b *BlockStatement) error {
+func (r *Resolver) VisitBlockStatement(b *BlockStatement) (any, error) {
 	// fmt.Println("Visited block")
 	r.beginScope()
 	defer r.endScope()
@@ -84,7 +84,7 @@ func (r *Resolver) VisitBlockStatement(b *BlockStatement) error {
 		r.resolveStmt(stmt)
 	}
 
-	return nil
+	return nil, nil
 
 }
 

@@ -13,11 +13,11 @@ type StatementVisitor interface {
 	VisitExpressionStatement(e *ExpressionStatement) (any, error)
 	VisitPrintStatement(p *PrintStatement) error
 	VisitVarDeclaration(v *VarDeclaration) (any, error)
-	VisitBlockStatement(v *BlockStatement) error
-	VisitIfStatement(i *IfStatement) error
-	VisitWhileStatement(w *WhileStatement) error
+	VisitBlockStatement(v *BlockStatement) (any, error)
+	VisitIfStatement(i *IfStatement) (any, error)
+	VisitWhileStatement(w *WhileStatement) (any, error)
 	VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
-    VisitReturnStatement(r *ReturnStatement) (error)
+	VisitReturnStatement(r *ReturnStatement) (any, error)
 }
 
 type ExpressionStatement struct {
@@ -104,7 +104,7 @@ type BlockStatement struct {
 }
 
 func (b *BlockStatement) accept(visitor StatementVisitor) (any, error) {
-	return nil, visitor.VisitBlockStatement(b)
+	return visitor.VisitBlockStatement(b)
 }
 
 func CreateBlock(statements []Statement) *BlockStatement {
@@ -120,7 +120,7 @@ type IfStatement struct {
 }
 
 func (i *IfStatement) accept(visitor StatementVisitor) (any, error) {
-	return nil, visitor.VisitIfStatement(i)
+	return visitor.VisitIfStatement(i)
 }
 
 func CreateIfStatement(expr Expression, ifStmt Statement, elseStmt Statement) *IfStatement {
@@ -137,7 +137,7 @@ type WhileStatement struct {
 }
 
 func (w *WhileStatement) accept(visitor StatementVisitor) (any, error) {
-	return nil, visitor.VisitWhileStatement(w)
+	return visitor.VisitWhileStatement(w)
 }
 
 func CreateWhileStatement(expr Expression, Stmt Statement) *WhileStatement {
@@ -169,7 +169,7 @@ func (r *ReturnStatement) Error() string {
 }
 
 func (r *ReturnStatement) accept(visitor StatementVisitor) (any, error) {
-    return nil, visitor.VisitReturnStatement(r)
+	return visitor.VisitReturnStatement(r)
 }
 
 func CreateReturnStatement(token *Token, expr Expression) *ReturnStatement {
