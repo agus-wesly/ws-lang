@@ -89,8 +89,6 @@ func (i *Interpreter) VisitFunction(f *Function) (any, error) {
 }
 
 func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error) {
-	f.Env = i.Environment
-	// Save into current scope
 	name := f.Identifier.Lexeme
 	i.Environment.Set(name, f)
 	return nil, nil

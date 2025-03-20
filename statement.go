@@ -67,7 +67,6 @@ func CreateVarDeclaration(expr Expression, identifier *Token) *VarDeclaration {
 type FunctionDeclaration struct {
 	Identifier *Token
 	Params     []*Token
-	Env        *Environment
 	Stmts      []Statement
 }
 
