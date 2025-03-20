@@ -359,7 +359,7 @@ func (p *Parser) parseAssignment() (Expression, error) {
 		exprVar, ok := expr.(*Identifier)
 		if !ok {
 			// If not then it must return error
-			return nil, CreateRuntimeError(p.peek(), "Invalid identifier")
+			return nil, p.CreateCompileError(p.peek(), "Invalid identifier")
 		}
 		value, err := p.parseComma()
 		if err != nil {
@@ -584,7 +584,7 @@ func (p *Parser) parsePrimary() (Expression, error) {
 			}
 		}
 	}
-	return nil, CreateRuntimeError(p.peek(), "Unknown symbol '"+p.peek().Lexeme+"'")
+	return nil, p.CreateCompileError(p.peek(), "Unknown symbol '"+p.peek().Lexeme+"'")
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -632,7 +632,7 @@ func (p *Parser) consume(tokenType TokenType, msg string) (*Token, error) {
 		p.advance()
 		return p.previous(), nil
 	}
-	return &Token{}, CreateRuntimeError(p.peek(), msg)
+	return &Token{}, p.CreateCompileError(p.peek(), msg)
 }
 
 func (p *Parser) error() error {
