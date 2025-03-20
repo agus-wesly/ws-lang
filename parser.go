@@ -114,12 +114,13 @@ func (p *Parser) parseWhile() (Statement, error) {
 		return nil, err
 	}
 
-	stmt, err := p.parseStatement()
+	_, err = p.consume(LEFT_BRACE, "Expected left brace '{'")
+	stmts, err := p.block()
 	if err != nil {
 		return nil, err
 	}
 
-	return CreateWhileStatement(expr, stmt), nil
+	return CreateWhileStatement(expr, stmts), nil
 }
 
 func (p *Parser) parseFor() (Statement, error) {
@@ -163,17 +164,20 @@ func (p *Parser) parseFor() (Statement, error) {
 		return nil, err
 	}
 
-	body, err := p.parseStatement()
+	_, err = p.consume(LEFT_BRACE, "Expected opening brace '{'")
+	if err != nil {
+		return nil, err
+	}
+
+	arrs, err := p.block()
 	if err != nil {
 		return nil, err
 	}
 
 	// Construct
-	arrs := []Statement{body}
 	if incrementer != nil {
 		arrs = append(arrs, CreateExpressionStatement(incrementer))
 	}
-	body = CreateBlock(arrs)
 
 	var expr Expression = nil
 	if condition == nil {
@@ -181,7 +185,7 @@ func (p *Parser) parseFor() (Statement, error) {
 	}
 	expr = condition
 
-	res := []Statement{CreateWhileStatement(expr, body)}
+	res := []Statement{CreateWhileStatement(expr, arrs)}
 	if declr != nil {
 		res = append([]Statement{declr}, res...)
 	}
@@ -231,10 +235,10 @@ func (p *Parser) parseFunctionDeclaration() (Statement, error) {
 		return nil, err
 	}
 
-    params, stmts, err := p.parseFunction()
-    if err != nil {
-        return nil, err
-    }
+	params, stmts, err := p.parseFunction()
+	if err != nil {
+		return nil, err
+	}
 
 	return CreateFunctionDeclaration(identifier, params, stmts), nil
 }

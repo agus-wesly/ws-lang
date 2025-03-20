@@ -11,19 +11,17 @@ type Environment struct {
 	*Interpreter
 }
 
-func (env *Environment) _Get(name string, expr Expression) (any, error) {
+func (env *Environment) Get(name string, expr Expression) (any, error) {
 	distance, ok := env.Interpreter.Locals[expr]
 	if !ok {
 		res := env.findInGlobal(name)
 		return res, nil
 	}
 
-	fmt.Println(env)
 	values := env.GetValuesFromDistance(distance)
-    fmt.Println(values, distance)
 	res, found := values[name]
 	if !found {
-        fmt.Println("err : ", distance)
+        fmt.Println(values, distance, name)
 		panic("Unreachable")
 	}
 
@@ -51,14 +49,15 @@ func (env *Environment) findInGlobal(name string) any {
 
 }
 
-func (env *Environment) Get(name string) (any, error) {
+func (env *Environment) _Get(name string) (any, error) {
+    panic("Disabled")
 	res, found := env.Values[name]
 
 	if !found {
 		if env.PrevEnv == nil {
 			return nil, errors.New(name + " is not defined")
 		}
-		val, err := env.PrevEnv.Get(name)
+		val, err := env.PrevEnv.Get(name, nil)
 		if err != nil {
 			return nil, errors.New(name + " is not defined.")
 		}

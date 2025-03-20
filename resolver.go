@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Resolver struct {
 	*Interpreter
 	Scopes []map[string]bool
@@ -49,7 +47,9 @@ func (r *Resolver) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 }
 
 func (r *Resolver) VisitReturnStatement(ret *ReturnStatement) (any, error) {
-	r.resolveExpr(ret.Expr)
+	if ret.Expr != nil {
+		r.resolveExpr(ret.Expr)
+	}
 	return nil, nil
 }
 
@@ -65,18 +65,18 @@ func (r *Resolver) VisitIfStatement(i *IfStatement) (any, error) {
 }
 
 func (r *Resolver) VisitWhileStatement(w *WhileStatement) (any, error) {
-	r.resolveExpr(w.Expr)
-
 	r.beginScope()
 	defer r.endScope()
 
-	r.resolveStmt(w.Stmt)
+	r.resolveExpr(w.Expr)
+	for _, stmt := range w.Stmt {
+		r.resolveStmt(stmt)
+	}
 
 	return nil, nil
 }
 
 func (r *Resolver) VisitBlockStatement(b *BlockStatement) (any, error) {
-	// fmt.Println("Visited block")
 	r.beginScope()
 	defer r.endScope()
 
@@ -100,9 +100,6 @@ func (r *Resolver) VisitExpressionStatement(e *ExpressionStatement) (any, error)
 
 func (r *Resolver) VisitFunction(f *Function) (any, error) {
 	r.resolveExpr(f.Identifier)
-
-	// r.beginScope()
-	// defer r.endScope()
 
 	for _, arg := range *f.Args {
 		r.resolveExpr(arg)
@@ -171,7 +168,6 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 				panic("TODO : Found but not yet defined")
 			}
 			dist := len(r.Scopes) - 1 - idx
-			fmt.Println(token.Lexeme, len(r.Scopes), idx)
 			r.Interpreter.Locals[expr] = dist
 
 			break

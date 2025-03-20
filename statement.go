@@ -133,17 +133,17 @@ func CreateIfStatement(expr Expression, ifStmt Statement, elseStmt Statement) *I
 
 type WhileStatement struct {
 	Expr Expression
-	Stmt Statement
+	Stmt []Statement
 }
 
 func (w *WhileStatement) accept(visitor StatementVisitor) (any, error) {
 	return visitor.VisitWhileStatement(w)
 }
 
-func CreateWhileStatement(expr Expression, Stmt Statement) *WhileStatement {
+func CreateWhileStatement(expr Expression, stmt []Statement) *WhileStatement {
 	return &WhileStatement{
 		Expr: expr,
-		Stmt: Stmt,
+		Stmt: stmt,
 	}
 }
 

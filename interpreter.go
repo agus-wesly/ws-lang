@@ -52,7 +52,7 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
-	_, err := i.Get(name)
+	_, err := i.Get(name, v)
 	if err != nil {
 		return nil, CreateRuntimeError(v.Token, "Unknown variable: "+name)
 	}
@@ -167,6 +167,14 @@ func (i *Interpreter) VisitIfStatement(ifs *IfStatement) (any, error) {
 }
 
 func (i *Interpreter) VisitWhileStatement(w *WhileStatement) (any, error) {
+	prevEnv := i.Environment
+	defer func() {
+		i.Environment = prevEnv
+	}()
+
+	newEnv := CreateEnvironment(prevEnv, make(map[string]any), i)
+	i.Environment = newEnv
+
 	for {
 		val, err := w.Expr.accept(i)
 		if err != nil {
@@ -177,13 +185,17 @@ func (i *Interpreter) VisitWhileStatement(w *WhileStatement) (any, error) {
 			break
 		}
 
-		val, err = w.Stmt.accept(i)
-		if err != nil {
-			if err == BreakStmtErr {
-				break
+		for _, stmt := range w.Stmt {
+			val, err := stmt.accept(i)
+			if err != nil {
+				if err == BreakStmtErr {
+					break
+				}
+				return val, err
 			}
-			return val, err
 		}
+
+		// val, err = w.Stmt.accept(i)
 	}
 	return nil, nil
 }
@@ -355,7 +367,7 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 }
 
 func (i *Interpreter) VisitIdentifier(identifier *Identifier) (any, error) {
-	val, err := i.Environment.Get(identifier.name.Lexeme)
+	val, err := i.Environment.Get(identifier.name.Lexeme, identifier)
 	if err != nil {
 		return nil, err
 	}
