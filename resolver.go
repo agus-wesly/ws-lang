@@ -146,7 +146,10 @@ func (r *Resolver) VisitUnary(u *Unary) (any, error) {
 }
 
 func (r *Resolver) VisitIdentifier(i *Identifier) (any, error) {
-	// Begin search
+	if r.isEmpty() {
+		return nil, nil
+	}
+
 	r.resolveFinal(i.name, i)
 	return nil, nil
 }
@@ -158,17 +161,17 @@ func (r *Resolver) VisitLiteral(l *Literal) any {
 func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 	for idx := len(r.Scopes) - 1; idx >= 0; idx -= 1 {
 		curr := r.Scopes[idx]
-		val, ok := curr[token.Lexeme]
-		if ok {
+		val, found := curr[token.Lexeme]
+		if found {
 			if !val {
 				r.Lox.Error(token, "Can't read local variable in its own initializer")
 				return
 			}
+
 			dist := len(r.Scopes) - 1 - idx
 			r.Interpreter.Locals[expr] = dist
 
 			break
-			// panic(fmt.Sprintf("Get the distance : %d\n", dist))
 		}
 	}
 }
