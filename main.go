@@ -74,7 +74,12 @@ func (lox *Lox) run(source string, replMode bool) {
 		os.Exit(69)
 	}
 	parser := CreateParser(tokens, lox)
+
 	statements, err := parser.parse()
+	// TODO : refactor this
+	if err != nil || lox.HadError {
+		os.Exit(69)
+	}
 
 	interpreter := CreateAndSetupInterpreter()
 	resolver := CreateResolver(interpreter, lox)
@@ -90,4 +95,9 @@ func (lox *Lox) run(source string, replMode bool) {
 		return
 	}
 
+}
+
+func (l *Lox) Error(token *Token, msg string) {
+	l.HadError = true
+	fmt.Printf("[line %d] Compile Error : %s\n", token.Line, msg)
 }

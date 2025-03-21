@@ -274,7 +274,8 @@ func (p *Parser) parseFunction() ([]*Token, []Statement, error) {
 	}
 
 	if len(params) >= 255 {
-		return nil, nil, p.CreateCompileError(p.peek(), "Can't have more than 255 args")
+		p.Lox.Error(p.peek(), "Can't have more than 255 args")
+		return nil, nil, nil
 	}
 
 	_, err = p.consume(RIGHT_PAREN, "Expected closing parentheses ')'")

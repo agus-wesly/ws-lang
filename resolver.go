@@ -161,7 +161,7 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 		val, ok := curr[token.Lexeme]
 		if ok {
 			if !val {
-				r.HadError = true
+				r.Lox.Error(token, "Can't read local variable in its own initializer")
 				return
 			}
 			dist := len(r.Scopes) - 1 - idx
