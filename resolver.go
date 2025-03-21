@@ -65,13 +65,8 @@ func (r *Resolver) VisitIfStatement(i *IfStatement) (any, error) {
 }
 
 func (r *Resolver) VisitWhileStatement(w *WhileStatement) (any, error) {
-	r.beginScope()
-	defer r.endScope()
-
 	r.resolveExpr(w.Expr)
-	for _, stmt := range w.Stmt {
-		r.resolveStmt(stmt)
-	}
+	r.resolveStmt(w.Stmt)
 
 	return nil, nil
 }
@@ -151,7 +146,6 @@ func (r *Resolver) VisitUnary(u *Unary) (any, error) {
 func (r *Resolver) VisitIdentifier(i *Identifier) (any, error) {
 	// Begin search
 	r.resolveFinal(i.name, i)
-	// Attach to the node
 	return nil, nil
 }
 

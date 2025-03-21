@@ -120,7 +120,8 @@ func (p *Parser) parseWhile() (Statement, error) {
 		return nil, err
 	}
 
-	return CreateWhileStatement(expr, stmts), nil
+	blockStmt := CreateBlock(stmts)
+	return CreateWhileStatement(expr, blockStmt), nil
 }
 
 func (p *Parser) parseFor() (Statement, error) {
@@ -179,13 +180,15 @@ func (p *Parser) parseFor() (Statement, error) {
 		arrs = append(arrs, CreateExpressionStatement(incrementer))
 	}
 
+	stmt := CreateBlock(arrs)
+
 	var expr Expression = nil
 	if condition == nil {
 		condition = CreateLiteral(true)
 	}
 	expr = condition
 
-	res := []Statement{CreateWhileStatement(expr, arrs)}
+	res := []Statement{CreateWhileStatement(expr, stmt)}
 	if declr != nil {
 		res = append([]Statement{declr}, res...)
 	}
