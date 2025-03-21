@@ -10,7 +10,6 @@ import (
 type Lox struct {
 	HadError bool
 	*Interpreter
-	*Resolver
 }
 
 func main() {
@@ -19,11 +18,9 @@ func main() {
 		fmt.Println("Usage : jlox [help]")
 		os.Exit(1)
 	}
-	interpreter := CreateAndSetupInterpreter()
-	lox := Lox{
-		Interpreter: interpreter,
-		Resolver:    CreateResolver(interpreter, make([]map[string]bool, 0)),
-	}
+
+	lox := Lox{}
+
 	if len(args) == 2 {
 		byt, err := os.ReadFile(args[1])
 		if err != nil {
@@ -78,8 +75,16 @@ func (lox *Lox) run(source string, replMode bool) {
 	}
 	parser := CreateParser(tokens, lox)
 	statements, err := parser.parse()
-    lox.Resolver.resolve(statements)
-	lox.Interpreter.interpret(statements, replMode)
+
+	interpreter := CreateAndSetupInterpreter()
+	resolver := CreateResolver(interpreter, lox)
+
+	resolver.resolve(statements)
+	if lox.HadError {
+		os.Exit(69)
+	}
+
+	interpreter.interpret(statements, replMode)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

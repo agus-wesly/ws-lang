@@ -2,13 +2,15 @@ package main
 
 type Resolver struct {
 	*Interpreter
+	*Lox
 	Scopes []map[string]bool
 }
 
-func CreateResolver(interpreter *Interpreter, scopes []map[string]bool) *Resolver {
+func CreateResolver(interpreter *Interpreter, lox *Lox) *Resolver {
 	return &Resolver{
 		Interpreter: interpreter,
-		Scopes:      scopes,
+		Scopes:      make([]map[string]bool, 0),
+		Lox:         lox,
 	}
 }
 
@@ -159,7 +161,8 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 		val, ok := curr[token.Lexeme]
 		if ok {
 			if !val {
-				panic("TODO : Found but not yet defined")
+				r.HadError = true
+				return
 			}
 			dist := len(r.Scopes) - 1 - idx
 			r.Interpreter.Locals[expr] = dist
