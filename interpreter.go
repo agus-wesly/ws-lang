@@ -52,7 +52,7 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	name := *(&v.Token.Lexeme)
-	_, err := i.Get(name, v)
+	_, err := i.lookUpVariable(name, v)
 	if err != nil {
 		return nil, CreateRuntimeError(v.Token, "Unknown variable: "+name)
 	}
@@ -66,7 +66,7 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 		return nil, err
 	}
 
-	return (i.Values[name]), nil
+	return (val), nil
 }
 
 func (i *Interpreter) VisitFunction(f *Function) (any, error) {
@@ -353,7 +353,7 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 }
 
 func (i *Interpreter) VisitIdentifier(identifier *Identifier) (any, error) {
-	val, err := i.Environment.Get(identifier.name.Lexeme, identifier)
+	val, err := i.Environment.lookUpVariable(identifier.name.Lexeme, identifier)
 	if err != nil {
 		return nil, err
 	}

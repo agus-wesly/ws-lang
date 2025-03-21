@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 )
 
 type Environment struct {
@@ -11,53 +10,50 @@ type Environment struct {
 	*Interpreter
 }
 
-func (env *Environment) Get(name string, expr Expression) (any, error) {
+func (env *Environment) lookUpVariable(name string, expr Expression) (any, error) {
 	distance, ok := env.Interpreter.Locals[expr]
 	if !ok {
-		res := env.findInGlobal(name)
-		return res, nil
+		return env.findInGlobal(name)
 	}
 
-	values := env.GetValuesFromDistance(distance)
-	res, found := values[name]
+	currEnv := env.GetAt(distance)
+	result, found := currEnv.Values[name]
 	if !found {
-        fmt.Println(values, distance, name)
 		panic("Unreachable")
 	}
 
-	return res, nil
+	return result, nil
 }
 
-func (env *Environment) GetValuesFromDistance(dist int) map[string]any {
+func (env *Environment) GetAt(dist int) *Environment {
 	curr := env
 	for i := 0; i < dist; i += 1 {
 		curr = env.PrevEnv
 	}
-	return curr.Values
+	return curr
 }
 
-func (env *Environment) findInGlobal(name string) any {
+func (env *Environment) findInGlobal(name string) (any, error) {
 	curr := env
 	for curr.PrevEnv != nil {
 		curr = curr.PrevEnv
 	}
 	val, ok := curr.Values[name]
 	if !ok {
-		panic("Not found in global")
+        return nil, errors.New("Not found in global")
 	}
-	return val
+	return val, nil
 
 }
 
-func (env *Environment) _Get(name string) (any, error) {
-    panic("Disabled")
+func (env *Environment) Get(name string) (any, error) {
 	res, found := env.Values[name]
 
 	if !found {
 		if env.PrevEnv == nil {
 			return nil, errors.New(name + " is not defined")
 		}
-		val, err := env.PrevEnv.Get(name, nil)
+		val, err := env.PrevEnv.lookUpVariable(name, nil)
 		if err != nil {
 			return nil, errors.New(name + " is not defined.")
 		}
