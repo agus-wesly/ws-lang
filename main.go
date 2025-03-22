@@ -102,3 +102,8 @@ func (l *Lox) Error(token *Token, msg string) {
 	l.HadError = true
 	fmt.Printf("[line %d] Compile Error : %s\n", token.Line, msg)
 }
+
+
+func (l *Lox) Warn(token *Token, msg string) {
+	fmt.Printf("[line %d] Warning : %s\n", token.Line, msg)
+}

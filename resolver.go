@@ -3,10 +3,24 @@ package main
 type Resolver struct {
 	*Interpreter
 	*Lox
-	Scopes []map[string]bool
+	Scopes []map[string]*ScopeValue
 
 	functionType FunctionType
 }
+
+type ScopeValue struct {
+	Token  *Token
+	Status Status
+}
+
+// Status
+type Status = int
+
+const (
+	DECLARED = iota
+	DEFINED
+	USED
+)
 
 // FunctionType
 type FunctionType = int
@@ -19,7 +33,7 @@ const (
 func CreateResolver(interpreter *Interpreter, lox *Lox) *Resolver {
 	return &Resolver{
 		Interpreter:  interpreter,
-		Scopes:       make([]map[string]bool, 0),
+		Scopes:       make([]map[string]*ScopeValue, 0),
 		Lox:          lox,
 		functionType: NONE,
 	}
@@ -185,10 +199,13 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 		curr := r.Scopes[idx]
 		val, found := curr[token.Lexeme]
 		if found {
-			if !val {
+			if val.Status != DEFINED {
 				r.Lox.Error(token, "Can't read local variable in its own initializer")
 				return
 			}
+
+			// ??
+			val.Status = USED
 
 			dist := len(r.Scopes) - 1 - idx
 			r.Interpreter.Locals[expr] = dist
@@ -204,7 +221,8 @@ func (r *Resolver) declare(token *Token) {
 	}
 
 	cur := r.Scopes[len(r.Scopes)-1]
-	cur[token.Lexeme] = false
+	val, _ := cur[token.Lexeme]
+	val.Status = DECLARED
 }
 
 func (r *Resolver) define(token *Token) {
@@ -215,16 +233,24 @@ func (r *Resolver) define(token *Token) {
 	cur := r.Scopes[len(r.Scopes)-1]
 	_, ok := cur[token.Lexeme]
 	if ok {
-		cur[token.Lexeme] = true
+		val, _ := cur[token.Lexeme]
+		val.Status = DEFINED
 	}
 }
 
 func (r *Resolver) beginScope() {
-	newScope := map[string]bool{}
+	newScope := map[string]*ScopeValue{}
 	r.Scopes = append(r.Scopes, newScope)
 }
 
 func (r *Resolver) endScope() {
+	// Find all the unused var
+	currScope := r.Scopes[len(r.Scopes)-1]
+	for key, val := range currScope {
+		if val.Status != USED {
+			r.Lox.Warn(val.Token, "Unused variable "+key)
+		}
+	}
 	r.Scopes = (r.Scopes[:len(r.Scopes)-1])
 }
 
