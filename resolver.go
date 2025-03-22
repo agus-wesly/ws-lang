@@ -199,12 +199,11 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 		curr := r.Scopes[idx]
 		val, found := curr[token.Lexeme]
 		if found {
-			if val.Status != DEFINED {
+			if val.Status < DEFINED {
 				r.Lox.Error(token, "Can't read local variable in its own initializer")
 				return
 			}
 
-			// ??
 			val.Status = USED
 
 			dist := len(r.Scopes) - 1 - idx
@@ -221,8 +220,11 @@ func (r *Resolver) declare(token *Token) {
 	}
 
 	cur := r.Scopes[len(r.Scopes)-1]
-	val, _ := cur[token.Lexeme]
-	val.Status = DECLARED
+	cur[token.Lexeme] = &ScopeValue{
+		Token:  token,
+		Status: DECLARED,
+	}
+
 }
 
 func (r *Resolver) define(token *Token) {
@@ -231,11 +233,11 @@ func (r *Resolver) define(token *Token) {
 	}
 
 	cur := r.Scopes[len(r.Scopes)-1]
-	_, ok := cur[token.Lexeme]
-	if ok {
-		val, _ := cur[token.Lexeme]
-		val.Status = DEFINED
+	val, ok := cur[token.Lexeme]
+	if !ok {
+		panic("Unreachable")
 	}
+	val.Status = DEFINED
 }
 
 func (r *Resolver) beginScope() {
@@ -248,7 +250,7 @@ func (r *Resolver) endScope() {
 	currScope := r.Scopes[len(r.Scopes)-1]
 	for key, val := range currScope {
 		if val.Status != USED {
-			r.Lox.Warn(val.Token, "Unused variable "+key)
+			r.Lox.Warn(val.Token, "Unused identifier "+key)
 		}
 	}
 	r.Scopes = (r.Scopes[:len(r.Scopes)-1])
