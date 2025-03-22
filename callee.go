@@ -39,7 +39,6 @@ func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args 
 		if err != nil {
 			if _, ok := err.(*ReturnStatement); ok {
 				// Encountered return keyword
-				//return f.handleReturn(interpreter, returnStmt)
 				return val, nil
 			}
 
@@ -52,17 +51,6 @@ func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args 
 
 func (f *FunctionDeclaration) arity() int {
 	return len(f.Params)
-}
-
-func (f *FunctionDeclaration) handleReturn(interpreter *Interpreter, ret *ReturnStatement) (any, error) {
-	if ret.Expr != nil {
-		val, err := ret.Expr.accept(interpreter)
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
-	}
-	return nil, nil
 }
 
 func (f *FunctionDeclaration) toString() string {
