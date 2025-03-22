@@ -4,13 +4,24 @@ type Resolver struct {
 	*Interpreter
 	*Lox
 	Scopes []map[string]bool
+
+	functionType FunctionType
 }
+
+// FunctionType
+type FunctionType = int
+
+const (
+	NONE = iota
+	FUNCTION
+) // FunctionType
 
 func CreateResolver(interpreter *Interpreter, lox *Lox) *Resolver {
 	return &Resolver{
-		Interpreter: interpreter,
-		Scopes:      make([]map[string]bool, 0),
-		Lox:         lox,
+		Interpreter:  interpreter,
+		Scopes:       make([]map[string]bool, 0),
+		Lox:          lox,
+		functionType: NONE,
 	}
 }
 
@@ -33,6 +44,12 @@ func (r *Resolver) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 	r.declare(f.Identifier)
 	r.define(f.Identifier)
 
+	currFunctionType := r.functionType
+	r.functionType = FUNCTION
+	defer func() {
+		r.functionType = currFunctionType
+	}()
+
 	r.beginScope()
 	defer r.endScope()
 
@@ -49,6 +66,11 @@ func (r *Resolver) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error)
 }
 
 func (r *Resolver) VisitReturnStatement(ret *ReturnStatement) (any, error) {
+	if r.functionType == NONE {
+		r.Lox.Error(ret.Token, "Illegal return statement")
+		return nil, ret
+	}
+
 	if ret.Expr != nil {
 		r.resolveExpr(ret.Expr)
 	}
