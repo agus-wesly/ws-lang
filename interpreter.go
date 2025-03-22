@@ -19,16 +19,19 @@ type ExpressionVisitor interface {
 }
 
 type Interpreter struct {
-	*Environment
-	Locals map[Expression]int
+	Environment *Environment
+	Locals      map[Expression]int
+	Globals     *Environment
 }
 
 func CreateAndSetupInterpreter() *Interpreter {
+	globalInterpreter := CreateEnvironment(nil, map[string]any{}, nil)
 	interpreter := &Interpreter{
-		Environment: CreateEnvironment(nil, map[string]any{}, nil),
+		Environment: globalInterpreter,
 		Locals:      make(map[Expression]int),
+		Globals:     globalInterpreter,
 	}
-	interpreter.Environment.Interpreter = interpreter
+	globalInterpreter.Interpreter = interpreter
 	SetupInterpreter(interpreter)
 
 	return interpreter
@@ -51,22 +54,24 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 }
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
-	name := *(&v.Token.Lexeme)
-	_, err := i.lookUpVariable(name, v)
-	if err != nil {
-		return nil, CreateRuntimeError(v.Token, "Unknown variable: "+name)
-	}
-
 	val, err := v.Expr.accept(i)
 	if err != nil {
 		return nil, err
 	}
-	err = i.Assign(name, val)
-	if err != nil {
-		return nil, err
+
+	distance, found := i.Locals[v]
+	if found {
+		i.Environment.AssignAt(distance, *v.Token, val)
+	} else {
+        // search in global
+		_, found := i.Globals.Values[v.Token.Lexeme]
+		if !found {
+			return nil, CreateRuntimeError(v.Token, "Cannot assign to undeclared variable "+v.Token.Lexeme)
+		}
+		i.Globals.Values[v.Token.Lexeme] = val
 	}
 
-	return (val), nil
+	return val, nil
 }
 
 func (i *Interpreter) VisitFunction(f *Function) (any, error) {

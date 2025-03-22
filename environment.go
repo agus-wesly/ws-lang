@@ -7,7 +7,7 @@ import (
 type Environment struct {
 	Values  map[string]any
 	PrevEnv *Environment
-	*Interpreter
+	Interpreter *Interpreter
 }
 
 func (env *Environment) lookUpVariable(name string, expr Expression) (any, error) {
@@ -28,7 +28,7 @@ func (env *Environment) lookUpVariable(name string, expr Expression) (any, error
 func (env *Environment) GetAt(dist int) *Environment {
 	curr := env
 	for i := 0; i < dist; i += 1 {
-		curr = env.PrevEnv
+		curr = curr.PrevEnv
 	}
 	return curr
 }
@@ -40,7 +40,7 @@ func (env *Environment) findInGlobal(name string) (any, error) {
 	}
 	val, ok := curr.Values[name]
 	if !ok {
-        return nil, errors.New("Not found in global")
+		return nil, errors.New("Not found in global")
 	}
 	return val, nil
 
@@ -88,6 +88,16 @@ func (env *Environment) Assign(name string, value any) error {
 		}
 	}
 	return nil
+}
+
+func (env *Environment) AssignAt(distance int, name Token, value any) {
+	targetEnv := env.GetAt(distance)
+	_, found := targetEnv.Values[name.Lexeme]
+	if !found {
+		panic("Unreachable")
+	}
+
+	targetEnv.Values[name.Lexeme] = value
 }
 
 func CreateEnvironment(prevEnv *Environment, values map[string]any, interpreter *Interpreter) *Environment {

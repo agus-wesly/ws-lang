@@ -81,6 +81,7 @@ func (lox *Lox) run(source string, replMode bool) {
 		os.Exit(69)
 	}
 
+    // TODO : Attach this to be a global read-only var
 	interpreter := CreateAndSetupInterpreter()
 	resolver := CreateResolver(interpreter, lox)
 
