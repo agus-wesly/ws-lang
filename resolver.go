@@ -181,7 +181,7 @@ func (r *Resolver) VisitUnary(u *Unary) (any, error) {
 	return nil, nil
 }
 
-func (r *Resolver) VisitIdentifier(i *Identifier) (any, error) {
+func (r *Resolver) VisitIdentifier(i *IdentifierExpr) (any, error) {
 	if r.isEmpty() {
 		return nil, nil
 	}
@@ -216,7 +216,7 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 			val.Status = USED
 
 			dist := len(r.Scopes) - 1 - idx
-			r.Interpreter.Locals[expr] = &LocalsValue{Distance: dist, Index: foundIdx}
+			r.Interpreter.Locals[expr] = &Local{Distance: dist, Index: foundIdx}
 
 			break
 		}

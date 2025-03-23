@@ -360,7 +360,7 @@ func (p *Parser) parseAssignment() (Expression, error) {
 	}
 	if p.match(EQUAL) {
 		// Check if expr is var
-		exprVar, ok := expr.(*Identifier)
+		exprVar, ok := expr.(*IdentifierExpr)
 		if !ok {
 			// If not then it must return error
 			return nil, p.CreateCompileError(p.peek(), "Invalid identifier")

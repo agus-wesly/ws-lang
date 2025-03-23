@@ -71,7 +71,7 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 		// search in global
 		for _, val := range i.Globals.Identifiers {
 			if val.Name == v.Token.Lexeme {
-				val.Identifier = newValue
+				val.Value = newValue
 			}
 		}
 	}
