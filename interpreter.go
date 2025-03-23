@@ -68,12 +68,6 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 	if found {
 		i.Environment.AssignAt(local.Distance, *v.Token, newValue)
 	} else {
-		// _, found := i.Globals.Values[v.Token.Lexeme]
-		// if !found {
-		// 	return nil, CreateRuntimeError(v.Token, "Cannot assign to undeclared variable "+v.Token.Lexeme)
-		// }
-		// i.Globals.Values[local.Index] = newValue
-
 		// search in global
 		for _, val := range i.Globals.Values {
 			if val.Name == v.Token.Lexeme {
@@ -160,7 +154,6 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) (any, error) {
 	for _, stmt := range b.Statements {
 		val, err := stmt.accept(i)
 		if err != nil {
-			// i.Environment = prevEnv
 			return val, err
 		}
 	}

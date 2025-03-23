@@ -3,7 +3,6 @@ package main
 type Resolver struct {
 	*Interpreter
 	*Lox
-	// Scopes []map[string]*ScopeValue
 	Scopes []*[]*ScopeValue
 
 	functionType FunctionType
