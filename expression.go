@@ -20,15 +20,15 @@ func (l *Literal) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitLiteral(l), nil
 }
 
-type Identifier struct {
+type IdentifierExpr struct {
 	name *Token
 }
 
-func CreateIdentifier(name *Token) *Identifier {
-	return &Identifier{name: name}
+func CreateIdentifier(name *Token) *IdentifierExpr {
+	return &IdentifierExpr{name: name}
 }
 
-func (varExpr *Identifier) accept(v ExpressionVisitor) (any, error) {
+func (varExpr *IdentifierExpr) accept(v ExpressionVisitor) (any, error) {
 	return v.VisitIdentifier(varExpr)
 }
 

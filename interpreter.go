@@ -8,7 +8,7 @@ import (
 
 type ExpressionVisitor interface {
 	VisitLiteral(l *Literal) any
-	VisitIdentifier(i *Identifier) (any, error)
+	VisitIdentifier(i *IdentifierExpr) (any, error)
 	VisitUnary(u *Unary) (any, error)
 	VisitBinary(b *Binary) (any, error)
 	VisitTernary(t *Ternary) (any, error)
@@ -20,11 +20,11 @@ type ExpressionVisitor interface {
 
 type Interpreter struct {
 	Environment *Environment
-	Locals      map[Expression]*LocalsValue
+	Locals      map[Expression]*Local
 	Globals     *Environment
 }
 
-type LocalsValue struct {
+type Local struct {
 	Distance int
 	Index    int
 }
@@ -33,7 +33,7 @@ func CreateAndSetupInterpreter() *Interpreter {
 	globalInterpreter := CreateEnvironment(nil, nil)
 	interpreter := &Interpreter{
 		Environment: globalInterpreter,
-		Locals:      make(map[Expression]*LocalsValue),
+		Locals:      make(map[Expression]*Local),
 		Globals:     globalInterpreter,
 	}
 	globalInterpreter.Interpreter = interpreter
@@ -69,9 +69,9 @@ func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
 		i.Environment.AssignAt(local.Distance, *v.Token, newValue)
 	} else {
 		// search in global
-		for _, val := range i.Globals.Values {
+		for _, val := range i.Globals.Identifiers {
 			if val.Name == v.Token.Lexeme {
-				val.Value = newValue
+				val.Identifier = newValue
 			}
 		}
 	}
@@ -368,7 +368,7 @@ func (i *Interpreter) VisitLiteral(l *Literal) any {
 	return l.Value
 }
 
-func (i *Interpreter) VisitIdentifier(identifier *Identifier) (any, error) {
+func (i *Interpreter) VisitIdentifier(identifier *IdentifierExpr) (any, error) {
 	val, err := i.Environment.lookUpVariable(identifier.name.Lexeme, identifier)
 	if err != nil {
 		return nil, err

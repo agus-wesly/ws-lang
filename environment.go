@@ -5,12 +5,12 @@ import (
 )
 
 type Environment struct {
-	Values      []*Value
+	Identifiers      []*Identifier
 	PrevEnv     *Environment
 	Interpreter *Interpreter
 }
 
-type Value struct {
+type Identifier struct {
 	Value any
 	Name  string
 }
@@ -22,7 +22,7 @@ func (env *Environment) lookUpVariable(name string, expr Expression) (any, error
 	}
 
 	currEnv := env.GetAt(local.Distance)
-	result := currEnv.Values[local.Index]
+	result := currEnv.Identifiers[local.Index]
 
 	return result.Value, nil
 }
@@ -36,7 +36,7 @@ func (env *Environment) GetAt(dist int) *Environment {
 }
 
 func (env *Environment) findInGlobal(name string) (any, error) {
-	for _, val := range env.Interpreter.Globals.Values {
+	for _, val := range env.Interpreter.Globals.Identifiers {
 		if val.Name == name {
 			return val.Value, nil
 		}
@@ -45,8 +45,8 @@ func (env *Environment) findInGlobal(name string) (any, error) {
 
 }
 
-func (env *Environment) findByName(name string) (*Value, bool) {
-	for _, val := range env.Values {
+func (env *Environment) findByName(name string) (*Identifier, bool) {
+	for _, val := range env.Identifiers {
 		if val.Name == name {
 			return val, true
 		}
@@ -64,7 +64,7 @@ func (env *Environment) GetCurrentBlock(name string) (any, error) {
 }
 
 func (env *Environment) Set(name string, value any) {
-	env.Values = append(env.Values, &Value{Value: value, Name: name})
+	env.Identifiers = append(env.Identifiers, &Identifier{Value: value, Name: name})
 }
 
 func (env *Environment) AssignAt(distance int, token Token, value any) {
@@ -81,7 +81,7 @@ func (env *Environment) AssignAt(distance int, token Token, value any) {
 func CreateEnvironment(prevEnv *Environment, interpreter *Interpreter) *Environment {
 	return &Environment{
 		PrevEnv:     prevEnv,
-		Values:      make([]*Value, 0),
+		Identifiers:      make([]*Identifier, 0),
 		Interpreter: interpreter,
 	}
 }
