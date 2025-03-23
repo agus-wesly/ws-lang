@@ -3,7 +3,8 @@ package main
 type Resolver struct {
 	*Interpreter
 	*Lox
-	Scopes []map[string]*ScopeValue
+	// Scopes []map[string]*ScopeValue
+	Scopes []*[]*ScopeValue
 
 	functionType FunctionType
 }
@@ -33,7 +34,7 @@ const (
 func CreateResolver(interpreter *Interpreter, lox *Lox) *Resolver {
 	return &Resolver{
 		Interpreter:  interpreter,
-		Scopes:       make([]map[string]*ScopeValue, 0),
+		Scopes:       make([]*[]*ScopeValue, 0),
 		Lox:          lox,
 		functionType: NONE,
 	}
@@ -194,11 +195,21 @@ func (r *Resolver) VisitLiteral(l *Literal) any {
 	return nil
 }
 
+func (r *Resolver) findByName(arr []*ScopeValue, name string) (*ScopeValue, int) {
+	for idx, val := range arr {
+		if val.Token.Lexeme == name {
+			return val, idx
+		}
+	}
+	return nil, -1
+}
+
 func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 	for idx := len(r.Scopes) - 1; idx >= 0; idx -= 1 {
 		curr := r.Scopes[idx]
-		val, found := curr[token.Lexeme]
-		if found {
+		val, foundIdx := r.findByName(*curr, token.Lexeme)
+		// val, found := curr[token.Lexeme]
+		if foundIdx != -1 {
 			if val.Status < DEFINED {
 				r.Lox.Error(token, "Can't read local variable in its own initializer")
 				return
@@ -207,7 +218,7 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 			val.Status = USED
 
 			dist := len(r.Scopes) - 1 - idx
-			r.Interpreter.Locals[expr] = dist
+			r.Interpreter.Locals[expr] = &LocalsValue{Distance: dist, Index: foundIdx}
 
 			break
 		}
@@ -220,10 +231,10 @@ func (r *Resolver) declare(token *Token) {
 	}
 
 	cur := r.Scopes[len(r.Scopes)-1]
-	cur[token.Lexeme] = &ScopeValue{
+	*cur = append(*cur, &ScopeValue{
 		Token:  token,
 		Status: DECLARED,
-	}
+	})
 
 }
 
@@ -233,24 +244,25 @@ func (r *Resolver) define(token *Token) {
 	}
 
 	cur := r.Scopes[len(r.Scopes)-1]
-	val, ok := cur[token.Lexeme]
-	if !ok {
+	val, idx := r.findByName(*cur, token.Lexeme)
+	if idx == -1 {
 		panic("Unreachable")
 	}
+
 	val.Status = DEFINED
 }
 
 func (r *Resolver) beginScope() {
-	newScope := map[string]*ScopeValue{}
-	r.Scopes = append(r.Scopes, newScope)
+	newScope := []*ScopeValue{}
+	r.Scopes = append(r.Scopes, &newScope)
 }
 
 func (r *Resolver) endScope() {
 	// Find all the unused var
 	currScope := r.Scopes[len(r.Scopes)-1]
-	for key, val := range currScope {
+	for _, val := range *currScope {
 		if val.Status != USED {
-			r.Lox.Warn(val.Token, "Unused identifier "+key)
+			r.Lox.Warn(val.Token, "Unused identifier "+val.Token.Lexeme)
 		}
 	}
 	r.Scopes = (r.Scopes[:len(r.Scopes)-1])

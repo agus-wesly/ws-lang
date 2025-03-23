@@ -23,7 +23,7 @@ func (f *FunctionDeclaration) call(interpreter *Interpreter, token *Token, args 
 		interpreter.Environment = prevEnv
 	}()
 
-	newEnv := CreateEnvironment(prevEnv, make(map[string]any), interpreter)
+	newEnv := CreateEnvironment(prevEnv, interpreter)
 	interpreter.Environment = newEnv
 
 	if f.arity() != len(*args) {

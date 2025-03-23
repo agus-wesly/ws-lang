@@ -20,15 +20,20 @@ type ExpressionVisitor interface {
 
 type Interpreter struct {
 	Environment *Environment
-	Locals      map[Expression]int
+	Locals      map[Expression]*LocalsValue
 	Globals     *Environment
 }
 
+type LocalsValue struct {
+	Distance int
+	Index    int
+}
+
 func CreateAndSetupInterpreter() *Interpreter {
-	globalInterpreter := CreateEnvironment(nil, map[string]any{}, nil)
+	globalInterpreter := CreateEnvironment(nil, nil)
 	interpreter := &Interpreter{
 		Environment: globalInterpreter,
-		Locals:      make(map[Expression]int),
+		Locals:      make(map[Expression]*LocalsValue),
 		Globals:     globalInterpreter,
 	}
 	globalInterpreter.Interpreter = interpreter
@@ -54,24 +59,30 @@ func (i *Interpreter) interpret(statements []Statement, replMode bool) {
 }
 
 func (i *Interpreter) VisitVarAssignment(v *VarAssignment) (any, error) {
-	val, err := v.Expr.accept(i)
+	newValue, err := v.Expr.accept(i)
 	if err != nil {
 		return nil, err
 	}
 
-	distance, found := i.Locals[v]
+	local, found := i.Locals[v]
 	if found {
-		i.Environment.AssignAt(distance, *v.Token, val)
+		i.Environment.AssignAt(local.Distance, *v.Token, newValue)
 	} else {
-        // search in global
-		_, found := i.Globals.Values[v.Token.Lexeme]
-		if !found {
-			return nil, CreateRuntimeError(v.Token, "Cannot assign to undeclared variable "+v.Token.Lexeme)
+		// _, found := i.Globals.Values[v.Token.Lexeme]
+		// if !found {
+		// 	return nil, CreateRuntimeError(v.Token, "Cannot assign to undeclared variable "+v.Token.Lexeme)
+		// }
+		// i.Globals.Values[local.Index] = newValue
+
+		// search in global
+		for _, val := range i.Globals.Values {
+			if val.Name == v.Token.Lexeme {
+				val.Value = newValue
+			}
 		}
-		i.Globals.Values[v.Token.Lexeme] = val
 	}
 
-	return val, nil
+	return newValue, nil
 }
 
 func (i *Interpreter) VisitFunction(f *Function) (any, error) {
@@ -136,7 +147,7 @@ func (i *Interpreter) VisitBlockStatement(b *BlockStatement) (any, error) {
 		i.Environment = prevEnv
 	}()
 
-	newEnv := CreateEnvironment(prevEnv, make(map[string]any), i)
+	newEnv := CreateEnvironment(prevEnv, i)
 
 	i.Environment = newEnv
 	for _, stmt := range b.Statements {
