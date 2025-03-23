@@ -207,7 +207,6 @@ func (r *Resolver) resolveFinal(token *Token, expr Expression) {
 	for idx := len(r.Scopes) - 1; idx >= 0; idx -= 1 {
 		curr := r.Scopes[idx]
 		val, foundIdx := r.findByName(*curr, token.Lexeme)
-		// val, found := curr[token.Lexeme]
 		if foundIdx != -1 {
 			if val.Status < DEFINED {
 				r.Lox.Error(token, "Can't read local variable in its own initializer")
