@@ -106,6 +106,13 @@ func (i *Interpreter) VisitFunction(f *Function) (any, error) {
 
 func (i *Interpreter) VisitFunctionDeclaration(f *FunctionDeclaration) (any, error) {
 	name := f.Identifier.Lexeme
+	_, err := i.Environment.GetCurrentBlock(name)
+	if err == nil {
+		// Function is Redeclarated
+        // TODO : maybe we can make this compile time ?
+		return nil, CreateRuntimeError(f.Identifier, "Redeclaration of name "+name)
+	}
+
 	i.Environment.Set(name, f)
 	return nil, nil
 }
